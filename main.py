@@ -10,7 +10,7 @@ my_canvas = Canvas(root, width=width, height=height, bg='white')
 my_canvas.pack(padx=2, pady=2)
 
 # Create TurtleBot
-bot = Car(root, my_canvas)
+bot = Car(my_canvas)
 bot.build([float(40), float(40)])
 
 root.bind('<Right>', bot.move)
