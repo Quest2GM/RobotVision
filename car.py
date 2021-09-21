@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 class Car:
     def __init__(self, canvas):
@@ -15,6 +16,7 @@ class Car:
         self.w4, self.w4_points = None, None
 
         # Rotation Increment
+        self.speed = 1
         self.rot_inc = 45
 
         # Pose - self.pos[0] = x-coordinate, self.pos[1] = y-coordinate, self.angle = orientation
@@ -41,13 +43,13 @@ class Car:
         self.w4 = self.canvas.create_polygon(self.w4_points, fill='black')
 
     # Car movement
-    def move(self, event):
+    def move(self):
 
         # Store current points with shorter variable names
         BP, IP, W1, W2, W3, W4 = self.body_points, self.indic_points, self.w1_points, self.w2_points, self.w3_points, self.w4_points
         
         # Compute new coordinates
-        M = np.array([2*np.cos(self.angle), -2*np.sin(self.angle)])
+        M = self.speed * np.array([np.cos(self.angle), -np.sin(self.angle)])
 
         # Move body in the direction
         self.canvas.move(self.body, M[0], M[1])
@@ -69,6 +71,11 @@ class Car:
         self.w3_points = [W3[0]+M[0], W3[1]+M[1], W3[2]+M[0], W3[3]+M[1], W3[4]+M[0], W3[5]+M[1], W3[6]+M[0], W3[7]+M[1]]
         self.w4_points = [W4[0]+M[0], W4[1]+M[1], W4[2]+M[0], W4[3]+M[1], W4[4]+M[0], W4[5]+M[1], W4[6]+M[0], W4[7]+M[1]]
 
+    def move_speed(self, event):
+        for i in range(50):
+            self.move()
+            time.sleep(1/25)
+    
     # Performs rotation on car. dir=1 => CCW, dir=-1 => CW
     def rotate_main(self, dir):
 
@@ -105,6 +112,7 @@ class Car:
 
         # Update pose in radians
         self.angle += dir * self.rot_inc/360 * 2 * np.pi
+    
 
     # Rotation functions to be called by event handler
     def rotateCCW(self, event):
@@ -123,7 +131,7 @@ class Car:
 
         # Defines rotation matrix to rotate body points
     def rot_matrix(self, V, dir):
-        a = float(self.rot_inc/360 * 2 * np.pi)
-        C = np.array([[np.cos(a), dir*np.sin(a)], [dir * -1 * np.sin(a), np.cos(a)]])
+        ang = float(self.rot_inc/360 * 2 * np.pi)
+        C = np.array([[np.cos(ang), dir*np.sin(ang)], [dir * -1 * np.sin(ang), np.cos(ang)]])
         X = np.matmul(C, V.reshape(2,-1))
         return X.reshape(1,2) + self.pos
