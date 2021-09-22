@@ -17,7 +17,7 @@ class Car:
 
         # Rotation Increment
         self.speed = 1
-        self.rot_inc = 45
+        self.rot_inc = None
 
         # Pose - self.pos[0] = x-coordinate, self.pos[1] = y-coordinate, self.angle = orientation
         self.pos, self.angle = np.zeros(2), 0
@@ -71,10 +71,6 @@ class Car:
         self.w3_points = [W3[0]+M[0], W3[1]+M[1], W3[2]+M[0], W3[3]+M[1], W3[4]+M[0], W3[5]+M[1], W3[6]+M[0], W3[7]+M[1]]
         self.w4_points = [W4[0]+M[0], W4[1]+M[1], W4[2]+M[0], W4[3]+M[1], W4[4]+M[0], W4[5]+M[1], W4[6]+M[0], W4[7]+M[1]]
 
-    def move_speed(self, event):
-        for i in range(50):
-            self.move()
-            time.sleep(1/25)
     
     # Performs rotation on car. dir=1 => CCW, dir=-1 => CW
     def rotate_main(self, dir):
@@ -115,10 +111,12 @@ class Car:
     
 
     # Rotation functions to be called by event handler
-    def rotateCCW(self, event):
+    def rotateCCW(self, r):
+        self.rot_inc = 180/(np.pi * r * 25)
         self.rotate_main(dir=1)
 
-    def rotateCW(self, event):
+    def rotateCW(self, r):
+        self.rot_inc = 180/(np.pi * r * 25)
         self.rotate_main(dir=-1)
         
     # Rotation Helper Functions

@@ -1,9 +1,13 @@
 from tkinter import *
 from car import Car
 import time
+import numpy as np
 
 # Global Vars
-sec_pass, inc, speed = 0, 0, 25
+sec_pass, inc, radius = 0, 0, 2.5
+
+speed = 25
+
 
 # Define Canvas and its Properties
 w, h = 1400, 900
@@ -28,8 +32,9 @@ def auto_move():
     
     global sec_pass, inc
 
-    if inc < speed * 10:
+    if inc < speed * 100:
         bot.move()
+        bot.rotateCW(r=radius)
         sec_pass += 1000/speed
         inc += 1
         l.config(text=str(float(sec_pass/1000)))
@@ -45,6 +50,8 @@ b = Button(root, text='Move', command=auto_move, font=('Helvetica', 24), fg='red
 b.pack(side='right')
 l = Label(root, text = '0', fg='red')
 l.pack(side='top')
+
+
 
 # root.bind('<Up>', bot.rotateCCW)
 # root.bind('<Down>', bot.rotateCW)
