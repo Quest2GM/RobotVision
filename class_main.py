@@ -1,7 +1,9 @@
 import numpy as np
 import time
+from func_main import *
 
 class Car:
+
     def __init__(self, canvas):
 
         # Defines the Tkinter Canvas
@@ -18,6 +20,9 @@ class Car:
         # Rotation Increment
         self.speed = 1
         self.rot_inc = None
+
+        # Other properties
+        self.mass = 1   # Unit: kg
 
         # Pose - self.pos[0] = x-coordinate, self.pos[1] = y-coordinate, self.angle = orientation
         self.pos, self.angle = np.zeros(2), 0
@@ -59,7 +64,7 @@ class Car:
         self.canvas.move(self.w3, M[0], M[1])
         self.canvas.move(self.w4, M[0], M[1])
 
-        # Tracks the car's path
+        # Line to visually track the car's path
         self.canvas.create_line(self.pos[0], self.pos[1], self.pos[0]+M[0], self.pos[1]+M[1])
 
         # Update position and body_points
@@ -75,42 +80,36 @@ class Car:
     # Performs rotation on car. dir=1 => CCW, dir=-1 => CW
     def rotate_main(self, dir):
 
-        # Sequentially delete Car and reestablish with Car post-rotation
-        N1, N2, N3, N4 = self.rot_helper(self.body_points, dir)
+        # Sequentially delete Car and reestablish with Car, post rotation
         self.canvas.delete(self.body)
-        self.body_points = [N1[0], N1[1], N2[0], N2[1], N3[0], N3[1], N4[0], N4[1]]
+        self.body_points = self.rot_helper(self.body_points, dir)
         self.body = self.canvas.create_polygon(self.body_points, fill='blue')
 
-        N1, N2, N3, N4 = self.rot_helper(self.indic_points, dir)
         self.canvas.delete(self.indic)
-        self.indic_points = [N1[0], N1[1], N2[0], N2[1], N3[0], N3[1], N4[0], N4[1]]
+        self.indic_points = self.rot_helper(self.indic_points, dir)
         self.indic = self.canvas.create_polygon(self.indic_points, fill='red')
 
-        N1, N2, N3, N4 = self.rot_helper(self.w1_points, dir)
         self.canvas.delete(self.w1)
-        self.w1_points = [N1[0], N1[1], N2[0], N2[1], N3[0], N3[1], N4[0], N4[1]]
+        self.w1_points = self.rot_helper(self.w1_points, dir)
         self.w1 = self.canvas.create_polygon(self.w1_points, fill='black')
 
-        N1, N2, N3, N4 = self.rot_helper(self.w2_points, dir)
         self.canvas.delete(self.w2)
-        self.w2_points = [N1[0], N1[1], N2[0], N2[1], N3[0], N3[1], N4[0], N4[1]]
+        self.w2_points = self.rot_helper(self.w2_points, dir)
         self.w2 = self.canvas.create_polygon(self.w2_points, fill='black')
 
-        N1, N2, N3, N4 = self.rot_helper(self.w3_points, dir)
         self.canvas.delete(self.w3)
-        self.w3_points = [N1[0], N1[1], N2[0], N2[1], N3[0], N3[1], N4[0], N4[1]]
+        self.w3_points = self.rot_helper(self.w3_points, dir)
         self.w3 = self.canvas.create_polygon(self.w3_points, fill='black')
 
-        N1, N2, N3, N4 = self.rot_helper(self.w4_points, dir)
         self.canvas.delete(self.w4)
-        self.w4_points = [N1[0], N1[1], N2[0], N2[1], N3[0], N3[1], N4[0], N4[1]]
+        self.w4_points = self.rot_helper(self.w4_points, dir)
         self.w4 = self.canvas.create_polygon(self.w4_points, fill='black')
 
-        # Update pose in radians
+        # Update orientation in radians
         self.angle += dir * self.rot_inc/360 * 2 * np.pi
     
 
-    # Rotation functions to be called by event handler
+    # Rotation functions
     def rotateCCW(self, r):
         self.rot_inc = 180/(np.pi * r * 25)
         self.rotate_main(dir=1)
@@ -119,17 +118,29 @@ class Car:
         self.rot_inc = 180/(np.pi * r * 25)
         self.rotate_main(dir=-1)
         
-    # Rotation Helper Functions
     def rot_helper(self, A, dir):
         P1 = self.rot_matrix(np.array([[A[0]-self.pos[0], A[1]-self.pos[1]]]), dir)[0]
         P2 = self.rot_matrix(np.array([[A[2]-self.pos[0], A[3]-self.pos[1]]]), dir)[0]
         P3 = self.rot_matrix(np.array([[A[4]-self.pos[0], A[5]-self.pos[1]]]), dir)[0]
         P4 = self.rot_matrix(np.array([[A[6]-self.pos[0], A[7]-self.pos[1]]]), dir)[0]
-        return P1, P2, P3, P4
+        return [P1[0], P1[1], P2[0], P2[1], P3[0], P3[1], P4[0], P4[1]]
 
-        # Defines rotation matrix to rotate body points
+    # Defines rotation matrix to rotate body points
     def rot_matrix(self, V, dir):
         ang = float(self.rot_inc/360 * 2 * np.pi)
         C = np.array([[np.cos(ang), dir*np.sin(ang)], [dir * -1 * np.sin(ang), np.cos(ang)]])
         X = np.matmul(C, V.reshape(2,-1))
         return X.reshape(1,2) + self.pos
+
+
+class Dubin:
+
+    def __init__(self):
+        self.x_start = 0
+        self.y_start = 0
+        self.x_end = 10
+        self.y_end = 10
+        self.a_start = 90
+        self.a_end = 45
+
+    

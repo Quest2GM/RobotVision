@@ -1,13 +1,11 @@
 from tkinter import *
-from car import Car
-import time
+from class_main import *
+from func_main import *
 import numpy as np
 
 # Global Vars
-sec_pass, inc, radius = 0, 0, 2.5
-
+sec_pass, inc, radius = 0, 0, 3
 speed = 25
-
 
 # Define Canvas and its Properties
 w, h = 1400, 900
@@ -17,6 +15,7 @@ root.geometry(str(w) + 'x' + str(h))
 root.state('zoomed')
 c = Canvas(root, width=w, height=h, bg='white')
 c.pack(padx=2, pady=2)
+
 
 def create_grid(event=None):
 
@@ -28,6 +27,8 @@ def create_grid(event=None):
     for i in range(0, h, 25):
         c.create_line([(0, i), (w, i)], tag='grid_line', fill='#D9E2E5')
 
+    c.create_oval(w/2-3, h/2-3, w/2+3, h/2+3, fill='black')
+
 def auto_move():
     
     global sec_pass, inc
@@ -37,7 +38,7 @@ def auto_move():
         bot.rotateCW(r=radius)
         sec_pass += 1000/speed
         inc += 1
-        l.config(text=str(float(sec_pass/1000)))
+        l.config(text='Simulation Time (s): ' + str(float(sec_pass/1000)))
         root.after(int(1000/speed), auto_move)
 
 # Create TurtleBot
@@ -46,12 +47,10 @@ bot.build([float(w/2), float(h/2)])
 c.bind('<Configure>', create_grid)
 
 # Add buttons and labels
-b = Button(root, text='Move', command=auto_move, font=('Helvetica', 24), fg='red')
-b.pack(side='right')
-l = Label(root, text = '0', fg='red')
-l.pack(side='top')
-
-
+b = Button(root, text='Move', command=auto_move, font=('Helvetica', 16), fg='black')
+b.place(x=58, y=10)
+l = Label(root, text='Simulation Time (s): 0', fg='black')
+l.place(x=58, y=60)
 
 # root.bind('<Up>', bot.rotateCCW)
 # root.bind('<Down>', bot.rotateCW)
