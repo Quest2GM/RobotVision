@@ -2,6 +2,9 @@ import numpy as np
 import time
 from func_main import *
 
+# Avoid division by zero warning
+np.seterr(divide='ignore')
+
 class Car:
 
     def __init__(self, canvas):
@@ -23,6 +26,7 @@ class Car:
 
         # Other properties
         self.mass = 1   # Unit: kg
+        self.turn_radius = 1
 
         # Pose - self.pos[0] = x-coordinate, self.pos[1] = y-coordinate, self.angle = orientation
         self.pos, self.angle = np.zeros(2), 0
@@ -71,10 +75,10 @@ class Car:
         self.pos += M
         self.body_points  = [BP[0]+M[0], BP[1]+M[1], BP[2]+M[0], BP[3]+M[1], BP[4]+M[0], BP[5]+M[1], BP[6]+M[0], BP[7]+M[1]]
         self.indic_points = [IP[0]+M[0], IP[1]+M[1], IP[2]+M[0], IP[3]+M[1], IP[4]+M[0], IP[5]+M[1], IP[6]+M[0], IP[7]+M[1]]
-        self.w1_points = [W1[0]+M[0], W1[1]+M[1], W1[2]+M[0], W1[3]+M[1], W1[4]+M[0], W1[5]+M[1], W1[6]+M[0], W1[7]+M[1]]
-        self.w2_points = [W2[0]+M[0], W2[1]+M[1], W2[2]+M[0], W2[3]+M[1], W2[4]+M[0], W2[5]+M[1], W2[6]+M[0], W2[7]+M[1]]
-        self.w3_points = [W3[0]+M[0], W3[1]+M[1], W3[2]+M[0], W3[3]+M[1], W3[4]+M[0], W3[5]+M[1], W3[6]+M[0], W3[7]+M[1]]
-        self.w4_points = [W4[0]+M[0], W4[1]+M[1], W4[2]+M[0], W4[3]+M[1], W4[4]+M[0], W4[5]+M[1], W4[6]+M[0], W4[7]+M[1]]
+        self.w1_points =    [W1[0]+M[0], W1[1]+M[1], W1[2]+M[0], W1[3]+M[1], W1[4]+M[0], W1[5]+M[1], W1[6]+M[0], W1[7]+M[1]]
+        self.w2_points =    [W2[0]+M[0], W2[1]+M[1], W2[2]+M[0], W2[3]+M[1], W2[4]+M[0], W2[5]+M[1], W2[6]+M[0], W2[7]+M[1]]
+        self.w3_points =    [W3[0]+M[0], W3[1]+M[1], W3[2]+M[0], W3[3]+M[1], W3[4]+M[0], W3[5]+M[1], W3[6]+M[0], W3[7]+M[1]]
+        self.w4_points =    [W4[0]+M[0], W4[1]+M[1], W4[2]+M[0], W4[3]+M[1], W4[4]+M[0], W4[5]+M[1], W4[6]+M[0], W4[7]+M[1]]
 
     
     # Performs rotation on car. dir=1 => CCW, dir=-1 => CW
@@ -106,7 +110,7 @@ class Car:
         self.w4 = self.canvas.create_polygon(self.w4_points, fill='black')
 
         # Update orientation in radians
-        self.angle += dir * self.rot_inc/360 * 2 * np.pi
+        self.angle += dir * deg_2_rad(self.rot_inc)
     
 
     # Rotation functions
@@ -127,7 +131,7 @@ class Car:
 
     # Defines rotation matrix to rotate body points
     def rot_matrix(self, V, dir):
-        ang = float(self.rot_inc/360 * 2 * np.pi)
+        ang = float(deg_2_rad(self.rot_inc))
         C = np.array([[np.cos(ang), dir*np.sin(ang)], [dir * -1 * np.sin(ang), np.cos(ang)]])
         X = np.matmul(C, V.reshape(2,-1))
         return X.reshape(1,2) + self.pos
@@ -135,12 +139,48 @@ class Car:
 
 class Dubin:
 
-    def __init__(self):
+    def __init__(self, canvas):
+
+        # Canvas
+        self.canvas = canvas
+
+        # Start and end positions of vehicle
         self.x_start = 0
         self.y_start = 0
         self.x_end = 10
         self.y_end = 10
-        self.a_start = 90
-        self.a_end = 45
+        self.a_start = deg_2_rad(90)
+        self.a_end = deg_2_rad(45)
+
+        # Minimum turn radius of Car
+        self.tr = 1
+
+    def create_circles(self):
+        
+        x1, y1, x2, y2 = self.build_start_circles(self.tr, self.a_start, self.x_start, self.y_start)
+        x3, y3, x4, y4 = self.build_start_circles(self.tr, self.a_end, self.x_end, self.y_end)
+        
+
+    def build_start_circles(self, r, a, x, y):
+
+        # Compute circle's positions
+        x1 = -r/np.sqrt(1 + np.square(1/np.tan(a))) + x
+        x2 = r/np.sqrt(1 + np.square(1/np.tan(a))) + x
+
+        if np.tan(a) == 0:
+            y1 = y - r
+            y2 = y + r
+        else:
+            y1 = -1/np.tan(a) * (x1 - x) + y
+            y2 = -1/np.tan(a) * (x2 - x) + y
+
+        # Print circles on canvas
+        xa, ya = grid_2_pixel(x1, y1)
+        self.canvas.create_oval(xa-self.tr*25, ya-self.tr*25, xa+self.tr*25, ya+self.tr*25)
+        xb, yb = grid_2_pixel(x2, y2)
+        self.canvas.create_oval(xb-self.tr*25, yb-self.tr*25, xb+self.tr*25, yb+self.tr*25)
+        
+        return x1, y1, x2, y2
+
 
     
