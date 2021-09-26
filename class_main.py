@@ -22,26 +22,26 @@ class Car:
 
         # Rotation Increment
         self.speed = 1
-        self.rot_inc = None
+        self.rot_inc = deg_2_rad(90)
 
         # Other properties
         self.mass = 1   # Unit: kg
         self.turn_radius = 1
 
         # Pose - self.pos[0] = x-coordinate, self.pos[1] = y-coordinate, self.angle = orientation
-        self.pos, self.angle = np.zeros(2), 0
+        self.pos, self.angle = np.zeros(2), deg_2_rad(0)
 
     # Builds the Car in the Canvas
     def build(self, S):
 
         # Initialize Pose and Body Points
         self.pos[0], self.pos[1] = S[0], S[1]
-        self.body_points = [S[0]-10, S[1]-10, S[0]+10, S[1]-10, S[0]+10, S[1]+10, S[0]-10, S[1]+10]
+        self.body_points =  [S[0]-10, S[1]-10, S[0]+10, S[1]-10, S[0]+10, S[1]+10, S[0]-10, S[1]+10]
         self.indic_points = [S[0], S[1]-8, S[0]+8, S[1]-8, S[0]+8, S[1]+8, S[0], S[1]+8]
-        self.w1_points = [S[0]-12, S[1]-12, S[0]-4, S[1]-12, S[0]-4, S[1]-6, S[0]-12, S[1]-6]
-        self.w2_points = [S[0]-12, S[1]+12, S[0]-4, S[1]+12, S[0]-4, S[1]+6, S[0]-12, S[1]+6]
-        self.w3_points = [S[0]+12, S[1]+12, S[0]+4, S[1]+12, S[0]+4, S[1]+6, S[0]+12, S[1]+6]
-        self.w4_points = [S[0]+12, S[1]-12, S[0]+4, S[1]-12, S[0]+4, S[1]-6, S[0]+12, S[1]-6]
+        self.w1_points =    [S[0]-12, S[1]-12, S[0]-4, S[1]-12, S[0]-4, S[1]-6, S[0]-12, S[1]-6]
+        self.w2_points =    [S[0]-12, S[1]+12, S[0]-4, S[1]+12, S[0]-4, S[1]+6, S[0]-12, S[1]+6]
+        self.w3_points =    [S[0]+12, S[1]+12, S[0]+4, S[1]+12, S[0]+4, S[1]+6, S[0]+12, S[1]+6]
+        self.w4_points =    [S[0]+12, S[1]-12, S[0]+4, S[1]-12, S[0]+4, S[1]-6, S[0]+12, S[1]-6]
 
         # Build Car
         self.body = self.canvas.create_polygon(self.body_points, fill='blue')
@@ -50,6 +50,10 @@ class Car:
         self.w2 = self.canvas.create_polygon(self.w2_points, fill='black')
         self.w3 = self.canvas.create_polygon(self.w3_points, fill='black')
         self.w4 = self.canvas.create_polygon(self.w4_points, fill='black')
+
+        # Rotate if necessary
+        self.rotate_main(dir=1)
+
 
     # Car movement
     def move(self):
@@ -110,16 +114,16 @@ class Car:
         self.w4 = self.canvas.create_polygon(self.w4_points, fill='black')
 
         # Update orientation in radians
-        self.angle += dir * deg_2_rad(self.rot_inc)
+        self.angle += dir * self.rot_inc
     
 
     # Rotation functions
     def rotateCCW(self, r):
-        self.rot_inc = 180/(np.pi * r * 25)
+        self.rot_inc = deg_2_rad(180/(np.pi * r * 25))
         self.rotate_main(dir=1)
 
     def rotateCW(self, r):
-        self.rot_inc = 180/(np.pi * r * 25)
+        self.rot_inc = deg_2_rad(180/(np.pi * r * 25))
         self.rotate_main(dir=-1)
         
     def rot_helper(self, A, dir):
@@ -131,7 +135,7 @@ class Car:
 
     # Defines rotation matrix to rotate body points
     def rot_matrix(self, V, dir):
-        ang = float(deg_2_rad(self.rot_inc))
+        ang = float(self.rot_inc)
         C = np.array([[np.cos(ang), dir*np.sin(ang)], [dir * -1 * np.sin(ang), np.cos(ang)]])
         X = np.matmul(C, V.reshape(2,-1))
         return X.reshape(1,2) + self.pos
@@ -155,11 +159,19 @@ class Dubin:
         # Minimum turn radius of Car
         self.tr = 1
 
-    def create_circles(self):
+    def create_paths(self):
         
+        # Start and end min-radius circles
         x1, y1, x2, y2 = self.build_start_circles(self.tr, self.a_start, self.x_start, self.y_start)
         x3, y3, x4, y4 = self.build_start_circles(self.tr, self.a_end, self.x_end, self.y_end)
+
+        outer1, outer3, inner1, inner3 = self.circle_POIs(x1, y1, x3, y3)
+        self.canvas.create_line(outer1, fill='red', width=2)
+        self.canvas.create_line(outer3, fill='red', width=2)
+        self.canvas.create_line(inner1, fill='blue', width=2)
+        self.canvas.create_line(inner3, fill='blue', width=2)
         
+        return       
 
     def build_start_circles(self, r, a, x, y):
 
@@ -174,13 +186,66 @@ class Dubin:
             y1 = -1/np.tan(a) * (x1 - x) + y
             y2 = -1/np.tan(a) * (x2 - x) + y
 
-        # Print circles on canvas
+        # Display circles on canvas
         xa, ya = grid_2_pixel(x1, y1)
-        self.canvas.create_oval(xa-self.tr*25, ya-self.tr*25, xa+self.tr*25, ya+self.tr*25)
+        self.canvas.create_oval(xa-self.tr*25, ya-self.tr*25, xa+self.tr*25, ya+self.tr*25, width=2)
         xb, yb = grid_2_pixel(x2, y2)
-        self.canvas.create_oval(xb-self.tr*25, yb-self.tr*25, xb+self.tr*25, yb+self.tr*25)
+        self.canvas.create_oval(xb-self.tr*25, yb-self.tr*25, xb+self.tr*25, yb+self.tr*25, width=2)
         
         return x1, y1, x2, y2
+
+    def circle_POIs(self, x1, y1, x2, y2):
+
+        # Relative angle of inclination/declination of second circle vs first circle
+        theta = np.arctan((y2-y1)/(x2-x1))
+
+        # Combined tangent mid-point
+        xp, yp = (x1 + x2)/2, (y1 + y2)/2
+
+        # Outer Tangent 1 - CW departure / CCW arrival
+        a1 = x1 - self.tr * np.sin(theta)
+        b1 = y1 + self.tr * np.cos(theta)
+        a2 = x2 - self.tr * np.sin(theta)
+        b2 = y2 + self.tr * np.cos(theta)
+
+        # Outer Tangent 2 - CCW departure / CW arrival
+        c1 = x1 + self.tr * np.sin(theta)
+        d1 = y1 - self.tr * np.cos(theta)
+        c2 = x2 + self.tr * np.sin(theta)
+        d2 = y2 - self.tr * np.cos(theta)
+
+        # Inner Tangent 1 - CCW departure / CCW arrival
+        e1 = (np.square(self.tr)*(xp-x1) + self.tr*(yp-y1) * np.sqrt(np.square(xp-x1)+np.square(yp-y1)-np.square(self.tr))) \
+             / (np.square(xp-x1) + np.square(yp-y1)) + x1
+        f1 = (np.square(self.tr)*(yp-y1) - self.tr*(xp-x1) * np.sqrt(np.square(xp-x1)+np.square(yp-y1)-np.square(self.tr))) \
+             / (np.square(xp-x1) + np.square(yp-y1)) + y1
+        e2 = (np.square(self.tr)*(xp-x2) + self.tr*(yp-y2) * np.sqrt(np.square(xp-x2)+np.square(yp-y2)-np.square(self.tr))) \
+             / (np.square(xp-x2) + np.square(yp-y2)) + x2
+        f2 = (np.square(self.tr)*(yp-y2) - self.tr*(xp-x2) * np.sqrt(np.square(xp-x2)+np.square(yp-y2)-np.square(self.tr))) \
+             / (np.square(xp-x2) + np.square(yp-y2)) + y2
+        
+        # Inner Tangent 2 - CW departure / CW arrival
+        g1 = (np.square(self.tr)*(xp-x1) - self.tr*(yp-y1) * np.sqrt(np.square(xp-x1)+np.square(yp-y1)-np.square(self.tr))) \
+             / (np.square(xp-x1) + np.square(yp-y1)) + x1
+        h1 = (np.square(self.tr)*(yp-y1) + self.tr*(xp-x1) * np.sqrt(np.square(xp-x1)+np.square(yp-y1)-np.square(self.tr))) \
+             / (np.square(xp-x1) + np.square(yp-y1)) + y1
+        g2 = (np.square(self.tr)*(xp-x2) - self.tr*(yp-y2) * np.sqrt(np.square(xp-x2)+np.square(yp-y2)-np.square(self.tr))) \
+             / (np.square(xp-x2) + np.square(yp-y2)) + x2
+        h2 = (np.square(self.tr)*(yp-y2) + self.tr*(xp-x2) * np.sqrt(np.square(xp-x2)+np.square(yp-y2)-np.square(self.tr))) \
+             / (np.square(xp-x2) + np.square(yp-y2)) + y2
+
+        # Convert to pixel coordinates
+        a1, b1 = grid_2_pixel(a1,b1)
+        a2, b2 = grid_2_pixel(a2,b2)
+        c1, d1 = grid_2_pixel(c1,d1)
+        c2, d2 = grid_2_pixel(c2,d2)
+        e1, f1 = grid_2_pixel(e1,f1)
+        e2, f2 = grid_2_pixel(e2,f2)
+        g1, h1 = grid_2_pixel(g1,h1)
+        g2, h2 = grid_2_pixel(g2,h2)
+
+        return ([a1,b1,a2,b2], [c1,d1,c2,d2], [e1,f1,e2,f2], [g1,h1,g2,h2])
+
 
 
     

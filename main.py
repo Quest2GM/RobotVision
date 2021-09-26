@@ -4,7 +4,7 @@ from func_main import *
 import numpy as np
 
 # Global Vars
-sec_pass, inc, radius = 0, 0, 3
+sec_pass, inc, radius = 0, 0, 1
 speed = 25
 
 # Define Canvas and its Properties
@@ -53,9 +53,6 @@ l = Label(root, text='Simulation Time (s): 0', fg='black')
 l.place(x=58, y=60)
 
 d = Dubin(c)
-d.create_circles()
-
-# root.bind('<Up>', bot.rotateCCW)
-# root.bind('<Down>', bot.rotateCW)
+d.create_paths()
 
 root.mainloop()
