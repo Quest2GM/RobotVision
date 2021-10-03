@@ -150,7 +150,7 @@ class Dubin:
 
         # Start and end positions of vehicle
         self.x_start, self.y_start = 0, 0
-        self.x_end, self.y_end = 10, 10
+        self.x_end, self.y_end = 10, 1
         self.a_start, self.a_end = deg_2_rad(90), deg_2_rad(45)
 
         # Minimum turn radius of Car
@@ -162,18 +162,58 @@ class Dubin:
         x1, y1, x2, y2 = self.build_start_circles(self.tr, self.a_start, self.x_start, self.y_start)
         x3, y3, x4, y4 = self.build_start_circles(self.tr, self.a_end, self.x_end, self.y_end)
 
-        outer1, outer3, inner1, inner3 = self.circle_POIs(x2, y2, x4, y4)
-        # self.canvas.create_line(outer1, fill='red', width=2)
-        # self.canvas.create_line(outer3, fill='red', width=2)
-        # self.canvas.create_line(inner1, fill='blue', width=2)
-        self.canvas.create_line(inner3, fill='blue', width=2)
+        # Get outer/inner circles
+        outer113, outer213, inner113, inner213 = self.circle_POIs(x1, y1, x3, y3)
+        outer114, outer214, inner114, inner214 = self.circle_POIs(x1, y1, x4, y4)
+        outer123, outer223, inner123, inner223 = self.circle_POIs(x2, y2, x3, y3)
+        outer124, outer224, inner124, inner224 = self.circle_POIs(x2, y2, x4, y4)
 
-        q1, q2 = pixel_2_grid(inner3[0], inner3[1])
-        q3, q4 = pixel_2_grid(inner3[2], inner3[3])
-        print(self.cw_or_ccw(x2, y2, q1, q2, self.a_start))
-        print(self.cw_or_ccw(x4, y4, q3, q4, self.a_end))
+
+        ds1 = self.cw_or_ccw(x1, y1, self.x_start, self.y_start, self.a_start)
+        ds2 = self.cw_or_ccw(x2, y2, self.x_start, self.y_start, self.a_start)
+        de1 = self.cw_or_ccw(x3, y3, self.x_end, self.y_end, self.a_end)
+        de2 = self.cw_or_ccw(x4, y4, self.x_end, self.y_end, self.a_end)
+
+        # Circle 1 to Circle 3:
+        if ds1 == 1 and de1 == 1:
+            self.canvas.create_line(outer213, fill='blue', width=2)
+        elif ds1 == 1 and de1 == -1:
+            self.canvas.create_line(inner113, fill='blue', width=2)
+        elif ds1 == -1 and de1 == 1:
+            self.canvas.create_line(inner213, fill='blue', width=2)
+        elif ds1 == -1 and de1 == -1:
+            self.canvas.create_line(outer113, fill='blue', width=2)
         
-        return       
+        # Circle 1 to Circle 4:
+        if ds1 == 1 and de2 == 1:
+            self.canvas.create_line(outer214, fill='red', width=2)
+        elif ds1 == 1 and de2 == -1:
+            self.canvas.create_line(inner114, fill='red', width=2)
+        elif ds1 == -1 and de2 == 1:
+            self.canvas.create_line(inner214, fill='red', width=2)
+        elif ds1 == -1 and de2 == -1:
+            self.canvas.create_line(outer114, fill='red', width=2)
+        
+        # Circle 2 to Circle 3:
+        if ds2 == 1 and de1 == 1:
+            self.canvas.create_line(outer223, fill='blue', width=2)
+        elif ds2 == 1 and de1 == -1:
+            self.canvas.create_line(inner123, fill='blue', width=2)
+        elif ds2 == -1 and de1 == 1:
+            self.canvas.create_line(inner223, fill='blue', width=2)
+        elif ds2 == -1 and de1 == -1:
+            self.canvas.create_line(outer123, fill='blue', width=2)
+
+        # Circle 2 to Circle 4:
+        if ds2 == 1 and de2 == 1:
+            self.canvas.create_line(outer224, fill='red', width=2)
+        elif ds2 == 1 and de2 == -1:
+            self.canvas.create_line(inner124, fill='red', width=2)
+        elif ds2 == -1 and de2 == 1:
+            self.canvas.create_line(inner224, fill='red', width=2)
+        elif ds2 == -1 and de2 == -1:
+            self.canvas.create_line(outer124, fill='red', width=2)
+          
 
     def build_start_circles(self, r, a, x, y):
 
@@ -191,7 +231,7 @@ class Dubin:
         # Display circles on canvas
         xa, ya = grid_2_pixel(x1, y1)
         xb, yb = grid_2_pixel(x2, y2)
-        self.canvas.create_oval(xa-self.tr*25, ya-self.tr*25, xa+self.tr*25, ya+self.tr*25, width=2, fill='red')
+        self.canvas.create_oval(xa-self.tr*25, ya-self.tr*25, xa+self.tr*25, ya+self.tr*25, width=2)
         self.canvas.create_oval(xb-self.tr*25, yb-self.tr*25, xb+self.tr*25, yb+self.tr*25, width=2)
         
         return x1, y1, x2, y2
@@ -240,43 +280,38 @@ class Dubin:
 
         return ([a1,b1,a2,b2], [c1,d1,c2,d2], [e1,f1,e2,f2], [g1,h1,g2,h2])
 
+    # Determines whether circle needs to be entered ccw or cw. (x_c, y_c) = circle center, (x, y) = destination point
     def cw_or_ccw(self, x_c, y_c, x, y, a):
         ccw = [[90, 180], [180, 270], [270, 360], [0, 90]]
         cw  = [[270, 360], [0, 90], [90, 180], [180, 270]]
 
         S = (x_c - x)/(y - y_c)
         A = np.arctan2(y - y_c, x_c - x)
+        a = rad_2_deg(a)
 
-        if (S == np.inf and A == 0) or (S == 0 and A > 0) or (S < 0 and A > 0):
+        # Return 1 if CCW, Return -1 if CW
+        if (S == np.inf and A == 0) or (S <= 0 and A > 0):
             if a >= ccw[0][0] and a <= ccw[0][1]:
-                return 'Q1: ccw'
+                return 1
             elif a >= cw[0][0] and a <= cw[0][1]:
-                return 'Q1: cw'
-            else:
-                return 'Q1: err'
-        elif (S == 0 and A > 0) or (S == np.inf and A > 0) or (S > 0 and A > 0):
+                return -1
+        elif (S >= 0 and A > 0):
             if a >= ccw[1][0] and a <= ccw[1][1]:
-                return 'Q2: ccw'
+                return 1
             elif a >= cw[1][0] and a <= cw[1][1]:
-                return 'Q2: cw'
-            else:
-                return 'Q2: err'
-        elif (S == np.inf and A > 0) or (S == 0 and A < 0) or (S < 0 and A < 0):
+                return -1
+        elif (S == np.inf and A > 0) or (S <= 0 and A < 0):
             if a >= ccw[2][0] and a <= ccw[2][1]:
-                return 'Q3: ccw'
+                return 1
             elif a >= cw[2][0] and a <= cw[2][1]:
-                return 'Q3: cw'
-            else:
-                return 'Q3: err'
-        elif (S == np.inf and A == 0) or (S == 0 and A < 0) or (S > 0 and A < 0):
+                return -1
+        elif (S == np.inf and A == 0) or (S >= 0 and A < 0):
             if a >= ccw[3][0] and a <= ccw[3][1]:
-                return 'Q4: ccw'
+                return 1
             elif a >= cw[3][0] and a <= cw[3][1]:
-                return 'Q4: cw'
-            else:
-                return 'Q4: err'
-        else:
-            return 'error'
+                return -1
+        
+        return None
 
 
 
