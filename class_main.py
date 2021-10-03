@@ -149,12 +149,9 @@ class Dubin:
         self.canvas = canvas
 
         # Start and end positions of vehicle
-        self.x_start = 0
-        self.y_start = 0
-        self.x_end = 10
-        self.y_end = 10
-        self.a_start = deg_2_rad(90)
-        self.a_end = deg_2_rad(45)
+        self.x_start, self.y_start = 0, 0
+        self.x_end, self.y_end = 10, 10
+        self.a_start, self.a_end = deg_2_rad(90), deg_2_rad(45)
 
         # Minimum turn radius of Car
         self.tr = 1
@@ -165,11 +162,16 @@ class Dubin:
         x1, y1, x2, y2 = self.build_start_circles(self.tr, self.a_start, self.x_start, self.y_start)
         x3, y3, x4, y4 = self.build_start_circles(self.tr, self.a_end, self.x_end, self.y_end)
 
-        outer1, outer3, inner1, inner3 = self.circle_POIs(x1, y1, x3, y3)
-        self.canvas.create_line(outer1, fill='red', width=2)
-        self.canvas.create_line(outer3, fill='red', width=2)
-        self.canvas.create_line(inner1, fill='blue', width=2)
+        outer1, outer3, inner1, inner3 = self.circle_POIs(x2, y2, x4, y4)
+        # self.canvas.create_line(outer1, fill='red', width=2)
+        # self.canvas.create_line(outer3, fill='red', width=2)
+        # self.canvas.create_line(inner1, fill='blue', width=2)
         self.canvas.create_line(inner3, fill='blue', width=2)
+
+        q1, q2 = pixel_2_grid(inner3[0], inner3[1])
+        q3, q4 = pixel_2_grid(inner3[2], inner3[3])
+        print(self.cw_or_ccw(x2, y2, q1, q2, self.a_start))
+        print(self.cw_or_ccw(x4, y4, q3, q4, self.a_end))
         
         return       
 
@@ -188,8 +190,8 @@ class Dubin:
 
         # Display circles on canvas
         xa, ya = grid_2_pixel(x1, y1)
-        self.canvas.create_oval(xa-self.tr*25, ya-self.tr*25, xa+self.tr*25, ya+self.tr*25, width=2)
         xb, yb = grid_2_pixel(x2, y2)
+        self.canvas.create_oval(xa-self.tr*25, ya-self.tr*25, xa+self.tr*25, ya+self.tr*25, width=2, fill='red')
         self.canvas.create_oval(xb-self.tr*25, yb-self.tr*25, xb+self.tr*25, yb+self.tr*25, width=2)
         
         return x1, y1, x2, y2
@@ -202,19 +204,15 @@ class Dubin:
         # Combined tangent mid-point
         xp, yp = (x1 + x2)/2, (y1 + y2)/2
 
-        # Outer Tangent 1 - CW departure / CCW arrival
-        a1 = x1 - self.tr * np.sin(theta)
-        b1 = y1 + self.tr * np.cos(theta)
-        a2 = x2 - self.tr * np.sin(theta)
-        b2 = y2 + self.tr * np.cos(theta)
+        # Outer Tangent 1 - CW departure / CW arrival
+        a1, b1 = x1 - self.tr * np.sin(theta), y1 + self.tr * np.cos(theta)
+        a2, b2 = x2 - self.tr * np.sin(theta), y2 + self.tr * np.cos(theta)
 
-        # Outer Tangent 2 - CCW departure / CW arrival
-        c1 = x1 + self.tr * np.sin(theta)
-        d1 = y1 - self.tr * np.cos(theta)
-        c2 = x2 + self.tr * np.sin(theta)
-        d2 = y2 - self.tr * np.cos(theta)
+        # Outer Tangent 2 - CCW departure / CCW arrival
+        c1, d1 = x1 + self.tr * np.sin(theta), y1 - self.tr * np.cos(theta)
+        c2, d2 = x2 + self.tr * np.sin(theta), y2 - self.tr * np.cos(theta)
 
-        # Inner Tangent 1 - CCW departure / CCW arrival
+        # Inner Tangent 1 - CCW departure / CW arrival
         e1 = (np.square(self.tr)*(xp-x1) + self.tr*(yp-y1) * np.sqrt(np.square(xp-x1)+np.square(yp-y1)-np.square(self.tr))) \
              / (np.square(xp-x1) + np.square(yp-y1)) + x1
         f1 = (np.square(self.tr)*(yp-y1) - self.tr*(xp-x1) * np.sqrt(np.square(xp-x1)+np.square(yp-y1)-np.square(self.tr))) \
@@ -224,7 +222,7 @@ class Dubin:
         f2 = (np.square(self.tr)*(yp-y2) - self.tr*(xp-x2) * np.sqrt(np.square(xp-x2)+np.square(yp-y2)-np.square(self.tr))) \
              / (np.square(xp-x2) + np.square(yp-y2)) + y2
         
-        # Inner Tangent 2 - CW departure / CW arrival
+        # Inner Tangent 2 - CW departure / CCW arrival
         g1 = (np.square(self.tr)*(xp-x1) - self.tr*(yp-y1) * np.sqrt(np.square(xp-x1)+np.square(yp-y1)-np.square(self.tr))) \
              / (np.square(xp-x1) + np.square(yp-y1)) + x1
         h1 = (np.square(self.tr)*(yp-y1) + self.tr*(xp-x1) * np.sqrt(np.square(xp-x1)+np.square(yp-y1)-np.square(self.tr))) \
@@ -235,16 +233,51 @@ class Dubin:
              / (np.square(xp-x2) + np.square(yp-y2)) + y2
 
         # Convert to pixel coordinates
-        a1, b1 = grid_2_pixel(a1,b1)
-        a2, b2 = grid_2_pixel(a2,b2)
-        c1, d1 = grid_2_pixel(c1,d1)
-        c2, d2 = grid_2_pixel(c2,d2)
-        e1, f1 = grid_2_pixel(e1,f1)
-        e2, f2 = grid_2_pixel(e2,f2)
-        g1, h1 = grid_2_pixel(g1,h1)
-        g2, h2 = grid_2_pixel(g2,h2)
+        (a1, b1), (a2, b2) = grid_2_pixel(a1,b1), grid_2_pixel(a2,b2)
+        (c1, d1), (c2, d2) = grid_2_pixel(c1,d1), grid_2_pixel(c2,d2)
+        (e1, f1), (e2, f2) = grid_2_pixel(e1,f1), grid_2_pixel(e2,f2)
+        (g1, h1), (g2, h2) = grid_2_pixel(g1,h1), grid_2_pixel(g2,h2)
 
         return ([a1,b1,a2,b2], [c1,d1,c2,d2], [e1,f1,e2,f2], [g1,h1,g2,h2])
+
+    def cw_or_ccw(self, x_c, y_c, x, y, a):
+        ccw = [[90, 180], [180, 270], [270, 360], [0, 90]]
+        cw  = [[270, 360], [0, 90], [90, 180], [180, 270]]
+
+        S = (x_c - x)/(y - y_c)
+        A = np.arctan2(y - y_c, x_c - x)
+
+        if (S == np.inf and A == 0) or (S == 0 and A > 0) or (S < 0 and A > 0):
+            if a >= ccw[0][0] and a <= ccw[0][1]:
+                return 'Q1: ccw'
+            elif a >= cw[0][0] and a <= cw[0][1]:
+                return 'Q1: cw'
+            else:
+                return 'Q1: err'
+        elif (S == 0 and A > 0) or (S == np.inf and A > 0) or (S > 0 and A > 0):
+            if a >= ccw[1][0] and a <= ccw[1][1]:
+                return 'Q2: ccw'
+            elif a >= cw[1][0] and a <= cw[1][1]:
+                return 'Q2: cw'
+            else:
+                return 'Q2: err'
+        elif (S == np.inf and A > 0) or (S == 0 and A < 0) or (S < 0 and A < 0):
+            if a >= ccw[2][0] and a <= ccw[2][1]:
+                return 'Q3: ccw'
+            elif a >= cw[2][0] and a <= cw[2][1]:
+                return 'Q3: cw'
+            else:
+                return 'Q3: err'
+        elif (S == np.inf and A == 0) or (S == 0 and A < 0) or (S > 0 and A < 0):
+            if a >= ccw[3][0] and a <= ccw[3][1]:
+                return 'Q4: ccw'
+            elif a >= cw[3][0] and a <= cw[3][1]:
+                return 'Q4: cw'
+            else:
+                return 'Q4: err'
+        else:
+            return 'error'
+
 
 
 
