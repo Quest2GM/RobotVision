@@ -22,7 +22,7 @@ class Car:
 
         # Rotation Increment
         self.speed = 1
-        self.rot_inc = deg_2_rad(90)
+        self.rot_inc = deg_2_rad(45)
 
         # Other properties
         self.mass = 1   # Unit: kg
@@ -119,11 +119,11 @@ class Car:
 
     # Rotation functions
     def rotateCCW(self, r):
-        self.rot_inc = deg_2_rad(180/(np.pi * r * 25))
+        self.rot_inc = 1 / (25 * r)
         self.rotate_main(dir=1)
 
     def rotateCW(self, r):
-        self.rot_inc = deg_2_rad(180/(np.pi * r * 25))
+        self.rot_inc = 1 / (25 * r)
         self.rotate_main(dir=-1)
         
     def rot_helper(self, A, dir):
@@ -149,9 +149,9 @@ class Dubin:
         self.canvas = canvas
 
         # Start and end positions of vehicle
-        self.x_start, self.y_start = 0, 0
-        self.x_end, self.y_end = 10, 1
-        self.a_start, self.a_end = deg_2_rad(90), deg_2_rad(45)
+        self.x_start, self.y_start = 10, 10
+        self.x_end, self.y_end = 0, 0
+        self.a_start, self.a_end = deg_2_rad(45), deg_2_rad(270)
 
         # Minimum turn radius of Car
         self.tr = 1
@@ -168,52 +168,87 @@ class Dubin:
         outer123, outer223, inner123, inner223 = self.circle_POIs(x2, y2, x3, y3)
         outer124, outer224, inner124, inner224 = self.circle_POIs(x2, y2, x4, y4)
 
-
         ds1 = self.cw_or_ccw(x1, y1, self.x_start, self.y_start, self.a_start)
         ds2 = self.cw_or_ccw(x2, y2, self.x_start, self.y_start, self.a_start)
         de1 = self.cw_or_ccw(x3, y3, self.x_end, self.y_end, self.a_end)
         de2 = self.cw_or_ccw(x4, y4, self.x_end, self.y_end, self.a_end)
 
+        S_list = []
+
+        print(ds1, ds2, de1, de2)
+
         # Circle 1 to Circle 3:
         if ds1 == 1 and de1 == 1:
-            self.canvas.create_line(outer213, fill='blue', width=2)
+            S_list += [outer213]
         elif ds1 == 1 and de1 == -1:
-            self.canvas.create_line(inner113, fill='blue', width=2)
+            S_list += [inner113]
         elif ds1 == -1 and de1 == 1:
-            self.canvas.create_line(inner213, fill='blue', width=2)
+            S_list += [inner213]
         elif ds1 == -1 and de1 == -1:
-            self.canvas.create_line(outer113, fill='blue', width=2)
-        
+            S_list += [outer113]
+                
         # Circle 1 to Circle 4:
         if ds1 == 1 and de2 == 1:
-            self.canvas.create_line(outer214, fill='red', width=2)
+            S_list += [outer214]
         elif ds1 == 1 and de2 == -1:
-            self.canvas.create_line(inner114, fill='red', width=2)
+            S_list += [inner114]
         elif ds1 == -1 and de2 == 1:
-            self.canvas.create_line(inner214, fill='red', width=2)
+            S_list += [inner214]
         elif ds1 == -1 and de2 == -1:
-            self.canvas.create_line(outer114, fill='red', width=2)
+            S_list += [outer114]
         
         # Circle 2 to Circle 3:
         if ds2 == 1 and de1 == 1:
-            self.canvas.create_line(outer223, fill='blue', width=2)
+            S_list += [outer223]
         elif ds2 == 1 and de1 == -1:
-            self.canvas.create_line(inner123, fill='blue', width=2)
+            S_list += [inner123]
         elif ds2 == -1 and de1 == 1:
-            self.canvas.create_line(inner223, fill='blue', width=2)
+            S_list += [inner223]
         elif ds2 == -1 and de1 == -1:
-            self.canvas.create_line(outer123, fill='blue', width=2)
+            S_list += [outer123]
 
         # Circle 2 to Circle 4:
         if ds2 == 1 and de2 == 1:
-            self.canvas.create_line(outer224, fill='red', width=2)
+            S_list += [outer224]
         elif ds2 == 1 and de2 == -1:
-            self.canvas.create_line(inner124, fill='red', width=2)
+            S_list += [inner124]
         elif ds2 == -1 and de2 == 1:
-            self.canvas.create_line(inner224, fill='red', width=2)
+            S_list += [inner224]
         elif ds2 == -1 and de2 == -1:
-            self.canvas.create_line(outer124, fill='red', width=2)
-          
+            S_list += [outer124]
+        
+        self.canvas.create_line(S_list[0], fill='blue', width=2)
+        self.canvas.create_line(S_list[1], fill='red', width=2)
+        self.canvas.create_line(S_list[2], fill='blue', width=2)
+        self.canvas.create_line(S_list[3], fill='red', width=2)
+
+        dir_list = [(ds1,de1), (ds1,de2), (ds2,de1), (ds2,de2)]
+        cen_list = [(x1,y1,x3,y3), (x1,y1,x4,y4), (x2,y2,x3,y3), (x2,y2,x4,y4)]
+        dist_list = []
+
+        # Compute Path Distances
+        for i, S in enumerate(S_list):
+            a, b, c, d = S
+            (a,b), (c,d) = pixel_2_grid(a,b), pixel_2_grid(c,d)
+            
+            X1 = np.arctan2(b-cen_list[i][1], a-cen_list[i][0]) - np.arctan2(self.y_start-cen_list[i][1], self.x_start-cen_list[i][0])
+            X2 = np.arctan2(d-cen_list[i][3], c-cen_list[i][2]) - np.arctan2(self.y_end-cen_list[i][3], self.x_end-cen_list[i][2])
+            if X1 < 0 and dir_list[i][0] == 1:
+                X1 = X1 + 2*np.pi
+            elif X1 > 0 and dir_list[i][0] == -1:
+                X1 = X1 - 2*np.pi
+            
+            if X2 < 0 and dir_list[i][1] == -1:
+                X2 = X2 + 2*np.pi
+            elif X2 > 0 and dir_list[i][1] == 1:
+                X2 = X2 - 2*np.pi
+
+            # print(X1, dir_list[i][0], dir_list[i][1])
+            # print(dist(a,b,c,d), np.abs(X1*self.tr), np.abs(X2*self.tr))    
+            dist_list += [dist(a,b,c,d) + np.abs(X1*self.tr) + np.abs(X2*self.tr)]
+
+        
+        print(dist_list)
 
     def build_start_circles(self, r, a, x, y):
 
@@ -231,8 +266,8 @@ class Dubin:
         # Display circles on canvas
         xa, ya = grid_2_pixel(x1, y1)
         xb, yb = grid_2_pixel(x2, y2)
-        self.canvas.create_oval(xa-self.tr*25, ya-self.tr*25, xa+self.tr*25, ya+self.tr*25, width=2)
-        self.canvas.create_oval(xb-self.tr*25, yb-self.tr*25, xb+self.tr*25, yb+self.tr*25, width=2)
+        self.canvas.create_oval(xa-self.tr*25, ya-self.tr*25, xa+self.tr*25, ya+self.tr*25, width=2, fill='gray')
+        self.canvas.create_oval(xb-self.tr*25, yb-self.tr*25, xb+self.tr*25, yb+self.tr*25, width=2, fill='cyan')
         
         return x1, y1, x2, y2
 
@@ -312,6 +347,12 @@ class Dubin:
                 return -1
         
         return None
+
+
+class PID:
+
+    def __init__(self):
+        self.x = 1
 
 
 

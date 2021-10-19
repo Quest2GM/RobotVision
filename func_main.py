@@ -16,3 +16,7 @@ def rad_2_deg(a):
 
 def deg_2_rad(a):
     return a / 360 * (2 * np.pi)
+
+# Calculate Distance
+def dist(x1, y1, x2, y2):
+    return np.sqrt(np.power(x2-x1,2) + np.power(y2-y1,2))
