@@ -3,12 +3,19 @@ from class_main import *
 from func_main import *
 import numpy as np
 from scipy.spatial.distance import cdist
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 # Global Vars
 sec_pass, inc, radius = 0, 0, 1
 speed = 25
 path_arr = []
 error = 0
+
+# PID Parameters
+I = 0
+D = 0
+LE = 0
 
 # Define Canvas and its Properties
 w, h = 1400, 900
@@ -46,7 +53,7 @@ def auto_move():
 
 def PID_move():
 
-    global path_arr, bot, sec_pass, inc, error
+    global path_arr, bot, sec_pass, inc, error, I, D, LE
 
     if np.abs(error) < 200:
 
@@ -63,17 +70,40 @@ def PID_move():
         # Compute the vectors that join the closest point and the bot, and the direction of the bot
         bot_line_pos = list([bp[0] - md[0], bp[1] - md[1]])
         bot_dir_vec = [np.cos(bot.angle), np.sin(bot.angle)]
-
+        
         # Compute cross-product of two vectors to determine whether the bot should rotate CW or CCW to follow path
-        error = np.cross(bot_line_pos + [0], bot_dir_vec + [0])[2]
+        e_rot = np.cross(bot_line_pos + [0], bot_dir_vec + [0])[2]
 
-        # Rotate depending on sign of error
-        if error > 0:
-            bot.rotateCCW(r=1.5)
-        elif error < 0:
-            bot.rotateCW(r=1.5)
+        # Compute distance error
+        e_dist = dist(*bp, *md)
+
+        # PID Parameters
+        kp, ki, kd = 0.2, 0.0001, 3
+
+        # Bang-bang Control: Rotate only depending on sign of error
+            # if e_rot > 0:
+            #     bot.rotateCCW(r=1.5)
+            # elif e_rot < 0:
+            #     bot.rotateCW(r=1.5)
+        
+        # PID Control
+        E = kp * e_dist + ki * I + kd * D
+        if e_rot > 0:
+            bot.rotateCCW(r=(1/25)/E)
+        elif e_rot < 0:
+            bot.rotateCW(r=(1/25)/E)
 
         bot.move()
+
+        # Correct I and D terms
+        I += e_dist
+        D = e_dist - LE
+        LE = e_dist
+
+        print('----------------')
+        print('Edist: ', e_dist)
+        print('I: ', I)
+        print('D: ', D)
 
         # Update simulation time on screen
         sec_pass += 1000/speed
@@ -96,13 +126,13 @@ def draw_path(event):
 
 # Create TurtleBot
 bot = Car(c)
-bot.build([float(w/2)+250, float(h/2)-250])
+bot.build([float(w/2), float(h/2)])
 c.bind('<Configure>', create_grid)
 c.bind('<Button-1>', get_x_and_y)
 c.bind('<B1-Motion>', draw_path)
 
 # Add buttons and labels
-b = Button(root, text='Move', command=PID_move, font=('Helvetica', 16), fg='black')
+b = Button(root, text='Run', command=PID_move, font=('Helvetica', 16), fg='black')
 b.place(x=58, y=10)
 l = Label(root, text='Simulation Time (s): 0', fg='black')
 l.place(x=58, y=60)
