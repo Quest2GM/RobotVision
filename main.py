@@ -8,6 +8,7 @@ from scipy.spatial.distance import cdist
 sec_pass, inc, radius = 0, 0, 1
 speed = 25
 path_arr = []
+error = 0
 
 # Define Canvas and its Properties
 w, h = 1400, 900
@@ -45,39 +46,36 @@ def auto_move():
 
 def PID_move():
 
-    global path_arr, bot, sec_pass, inc
+    global path_arr, bot, sec_pass, inc, error
 
-    if inc < speed * 100:
+    if np.abs(error) < 200:
 
         # Calculate minimum distance        
         dists = cdist([bot.pos], path_arr, 'euclidean')[0]
         ind_min = np.argmin(dists)
         min_dist_point = path_arr[ind_min]
-        next_min_dist_point = path_arr[ind_min + 2]
+        min_dist_point_2 = path_arr[ind_min + 2]
 
-        c.create_line(*bot.pos, *min_dist_point, fill='blue')
+        # Convert points into grid coordinates
+        bp = pixel_2_grid(*bot.pos)
+        md = pixel_2_grid(*min_dist_point)
 
-        tang = list(pixel_2_grid(*[next_min_dist_point[0] - min_dist_point[0], next_min_dist_point[1] - min_dist_point[1]]))
-        rel_point = list(pixel_2_grid(*[bot.pos[0]-min_dist_point[0], bot.pos[1]-min_dist_point[1]]))
-        error = np.cross(tang + [0], rel_point + [0])[2]
+        # Compute the vectors that join the closest point and the bot, and the direction of the bot
+        bot_line_pos = list([bp[0] - md[0], bp[1] - md[1]])
+        bot_dir_vec = [np.cos(bot.angle), np.sin(bot.angle)]
 
+        # Compute cross-product of two vectors to determine whether the bot should rotate CW or CCW to follow path
+        error = np.cross(bot_line_pos + [0], bot_dir_vec + [0])[2]
 
-        # rel_point = list(pixel_2_grid(*[bot.pos[0]-min_dist_point[0], bot.pos[1]-min_dist_point[1]]))
-        # bot_vec = list(pixel_2_grid(*[np.cos(bot.angle), np.sin(bot.angle)]))
-
-        # # Move bot
-        # error = np.cross(bot_vec + [0], rel_point + [0])[2]
-
-        print(error)
-
+        # Rotate depending on sign of error
         if error > 0:
-            bot.rotateCCW(r=1)
+            bot.rotateCCW(r=1.5)
         elif error < 0:
-            bot.rotateCW(r=1)
+            bot.rotateCW(r=1.5)
 
         bot.move()
 
-        # Update time on screen
+        # Update simulation time on screen
         sec_pass += 1000/speed
         inc += 1
         l.config(text='Simulation Time (s): ' + str(float(sec_pass/1000)))
