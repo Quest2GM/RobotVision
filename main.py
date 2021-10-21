@@ -75,10 +75,10 @@ def PID_move():
         e_rot = np.cross(bot_line_pos + [0], bot_dir_vec + [0])[2]
 
         # Compute distance error
-        e_dist = dist(*bp, *md)
+        e_dist = dist(*bp, *md) - 0.5
 
         # PID Parameters
-        kp, ki, kd = 0.2, 0.0001, 3
+        kp, ki, kd = 0.4, 0.00001, 0.1
 
         # Bang-bang Control: Rotate only depending on sign of error
             # if e_rot > 0:
@@ -96,19 +96,15 @@ def PID_move():
         bot.move()
 
         # Correct I and D terms
-        I += e_dist
-        D = e_dist - LE
+        I += e_dist * (1/speed)
+        D = (e_dist - LE)/(1/speed)
         LE = e_dist
-
-        print('----------------')
-        print('Edist: ', e_dist)
-        print('I: ', I)
-        print('D: ', D)
 
         # Update simulation time on screen
         sec_pass += 1000/speed
         inc += 1
         l.config(text='Simulation Time (s): ' + str(float(sec_pass/1000)))
+        l2.config(text='PID Parameters: Error, E, I, D = ' + str(float(e_dist)) + ', ' + str(float(E)) + ', ' + str(float(I)) + ', ' + str(float(D)))
         root.after(int(1000/speed), PID_move)
 
 
@@ -136,6 +132,8 @@ b = Button(root, text='Run', command=PID_move, font=('Helvetica', 16), fg='black
 b.place(x=58, y=10)
 l = Label(root, text='Simulation Time (s): 0', fg='black')
 l.place(x=58, y=60)
+l2 = Label(root, text='PID Parameters: ', fg='black')
+l2.place(x=58, y=110)
 
 # d = Dubin(c)
 # d.create_paths()
