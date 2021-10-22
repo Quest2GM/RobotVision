@@ -61,24 +61,26 @@ def PID_move():
         dists = cdist([bot.pos], path_arr, 'euclidean')[0]
         ind_min = np.argmin(dists)
         min_dist_point = path_arr[ind_min]
-        min_dist_point_2 = path_arr[ind_min + 2]
+        min_dist_point_2 = path_arr[ind_min + 5]
 
         # Convert points into grid coordinates
         bp = pixel_2_grid(*bot.pos)
         md = pixel_2_grid(*min_dist_point)
+        md2 = pixel_2_grid(*min_dist_point_2)
 
         # Compute the vectors that join the closest point and the bot, and the direction of the bot
         bot_line_pos = list([bp[0] - md[0], bp[1] - md[1]])
         bot_dir_vec = [np.cos(bot.angle), np.sin(bot.angle)]
+        # bot_dir_vec = list([md2[0]-md[0], md2[1]-md[1]])
         
         # Compute cross-product of two vectors to determine whether the bot should rotate CW or CCW to follow path
         e_rot = np.cross(bot_line_pos + [0], bot_dir_vec + [0])[2]
 
         # Compute distance error
-        e_dist = dist(*bp, *md) - 0.5
+        P = dist(*bp, *md) - 0.1
 
         # PID Parameters
-        kp, ki, kd = 0.4, 0.00001, 0.1
+        kp, ki, kd = 0.14, 0.00001, 0.05
 
         # Bang-bang Control: Rotate only depending on sign of error
             # if e_rot > 0:
@@ -87,7 +89,7 @@ def PID_move():
             #     bot.rotateCW(r=1.5)
         
         # PID Control
-        E = kp * e_dist + ki * I + kd * D
+        E = kp * P + ki * I + kd * D
         if e_rot > 0:
             bot.rotateCCW(r=(1/25)/E)
         elif e_rot < 0:
@@ -96,15 +98,15 @@ def PID_move():
         bot.move()
 
         # Correct I and D terms
-        I += e_dist * (1/speed)
-        D = (e_dist - LE)/(1/speed)
-        LE = e_dist
-
+        I += P * (1/speed)
+        D = (P - LE)/(1/speed)
+        LE = P
+        
         # Update simulation time on screen
         sec_pass += 1000/speed
         inc += 1
         l.config(text='Simulation Time (s): ' + str(float(sec_pass/1000)))
-        l2.config(text='PID Parameters: Error, E, I, D = ' + str(float(e_dist)) + ', ' + str(float(E)) + ', ' + str(float(I)) + ', ' + str(float(D)))
+        # l2.config(text='PID Parameters: Error, E, I, D = ' + str(float(e_dist)) + ', ' + str(float(E)) + ', ' + str(float(I)) + ', ' + str(float(D)))
         root.after(int(1000/speed), PID_move)
 
 
