@@ -9,4 +9,12 @@ The project will be prototyped in Python and will be later converted to C++. For
 ## PID Control
 ![](pid_ctrl_demo.gif)
 
-You can basically draw a path for the robot to follow and the robot will follow it.
+You can basically draw a path for the robot to follow and the robot will follow it. The PID constants are tunable, and the  error is computed as the straight line distance between the robot and the closest point to the path.
+
+# Progress
+- [x] Dubin's Path calculator
+- [x] PID Control
+- [ ] Lead-Lag Control
+- [ ] Kalman Filtering (Normal, Extended, Unscented)
+- [ ] Bayesian Localization
+- [ ] SLAM
