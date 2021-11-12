@@ -2,6 +2,9 @@ import numpy as np
 import time
 from func_main import *
 
+import numpy as np
+from scipy.spatial.distance import cdist
+
 # Avoid division by zero warning
 np.seterr(divide='ignore')
 
@@ -119,11 +122,11 @@ class Car:
 
     # Rotation functions
     def rotateCCW(self, r):
-        self.rot_inc = 1 / (25 * r)
+        self.rot_inc = 1 / (25 * r) * (1/25)
         self.rotate_main(dir=1)
 
     def rotateCW(self, r):
-        self.rot_inc = 1 / (25 * r)
+        self.rot_inc = 1 / (25 * r) * (1/25)
         self.rotate_main(dir=-1)
         
     def rot_helper(self, A, dir):
@@ -351,10 +354,45 @@ class Dubin:
 
 class PID:
 
-    def __init__(self):
-        self.x = 1
+    def __init__(self, kp, ki, kd, f_dist):
+        self.kp, self.ki, self.kd = kp, ki, kd
+        self.P, self.I, self.D, self.LE = 0, 0, 0, 0
+        self.e_rot = None
+        self.E = None
+        self.f_dist = f_dist
+
+    def compute_dist_dir(self, path_arr, bot_pos, bot_angle):
+
+        # Calculate minimum distance        
+        dists = cdist([bot_pos], path_arr, 'euclidean')[0]
+        ind_min = np.argmin(dists)
+        min_dist_point = path_arr[ind_min]
+        min_dist_point_2 = path_arr[ind_min + 5]
+
+        # Convert points into grid coordinates
+        bp = pixel_2_grid(*bot_pos)
+        md = pixel_2_grid(*min_dist_point)
+
+        # Compute the vectors that join the closest point and the bot, and the direction of the bot
+        bot_line_pos = list([bp[0] - md[0], bp[1] - md[1]])
+        bot_dir_vec = [np.cos(bot_angle), np.sin(bot_angle)]
+
+        # Compute distance error
+        self.P = dist(*bp, *md) - self.f_dist
+        
+        # Compute cross-product of two vectors to determine whether the bot should rotate CW or CCW to follow path
+        self.e_rot = np.cross(bot_line_pos + [0], bot_dir_vec + [0])[2]
 
 
+    def update_gains(self, speed):
 
+        self.E = self.kp * self.P + self.ki * self.I + self.kd * self.D
+
+        # Correct I and D terms
+        self.I += self.P * (1/speed)
+        self.D = (self.P - self.LE)/(1/speed)
+        self.LE = self.P
+
+        return self.E, self.e_rot
 
     
