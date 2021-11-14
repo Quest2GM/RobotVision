@@ -11,11 +11,6 @@ speed = 25
 path_arr = []
 error = 0
 
-# PID Parameters
-I = 0
-D = 0
-LE = 0
-
 # Define Canvas and its Properties
 w, h = 1400, 900
 root = Tk()
@@ -84,11 +79,28 @@ def PID_move():
 
 def Kalman_move():
 
-
+    global path_arr, bot, sec_pass, PID_ctrl
 
     if True:
+        
+        # Update gains
+        PID_ctrl.compute_dist_dir(path_arr, bot.pos, bot.angle)
+        E, e_rot = PID_ctrl.update_gains(speed)
 
-        root.after(int(1000/speed), PID_move)
+        # PID Control
+        if e_rot > 0:
+            bot.rotateCCW(r=(1/25)/E)
+        elif e_rot < 0:
+            bot.rotateCW(r=(1/25)/E)
+
+        bot.move()
+
+        # Kalman filtering
+        X = np.array([])
+
+        sec_pass += 1000/speed
+        l.config(text='Simulation Time (s): ' + str(float(sec_pass/1000)))
+        root.after(int(1000/speed), Kalman_move)
 
 
 def get_x_and_y(event):
@@ -111,6 +123,16 @@ c.bind('<B1-Motion>', draw_path)
 
 # Setup PID
 PID_ctrl = PID(kp=5, ki=0.00001, kd=0.5, f_dist=0.1)
+
+# Setup Kalman
+kf = Kalman(X_0=[0,0,bot.angle], Q=np.eye(3)*0.005, R=np.eye(1)*0.001, P_0=np.eye(3)*1e-5, u=1)
+
+# Add shapes for Kalman Filtering
+r = 10
+x0, y0 = grid_2_pixel(5,5)
+x1, y1 = grid_2_pixel(10,10)
+c.create_oval(x0-r, y0-r, x0+r, y0+r, fill='red')
+c.create_oval(x1-r, y1-r, x1+r, y1+r, fill='red')
 
 # Add buttons and labels
 b = Button(root, text='Run', command=PID_move, font=('Helvetica', 16), fg='black')

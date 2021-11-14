@@ -25,7 +25,7 @@ class Car:
 
         # Rotation Increment
         self.speed = 1
-        self.rot_inc = deg_2_rad(45)
+        self.rot_inc = deg_2_rad(0)
 
         # Other properties
         self.mass = 1   # Unit: kg
@@ -394,5 +394,58 @@ class PID:
         self.LE = self.P
 
         return self.E, self.e_rot
+
+
+class Kalman:
+
+    def __init__(self, X_0, Q, R, P_0, u):
+        self.X_0 = X_0
+        self.u = u
+        self.speed = speed
+        self.Ak, self.Bk, self.Dk = None, None, None
+        self.Wk = None
+
+    def update_Ak(self, theta_k):
+        Ak = np.array([[1, 0, -self.u*(1/self.speed)*np.sin(theta_k)], 
+                        [0, 1, self.u*(1/self.speed)*np.cos(theta_k)],
+                        [0, 0, 1]])
+        self.Ak = Ak
+        return Ak
+
+    def update_Bk(self, theta_k):
+        Bk = np.array([[self.u*(1/self.speed)*np.cos(theta_k), 0],
+                       [self.u*(1/self.speed)*np.sin(theta_k), 0],
+                       [0, 1/speed]])
+        self.Bk = Bk
+        return Bk
+    
+    def update_Dk(self, x_CN, y_CN, xk, yk):
+        Dk = np.array([[(y_CN-yk)/((x_CN-xk)**2 + (y_CN-yk)**2),
+                        (xk-x_CN)/((x_CN-xk)**2 + (y_CN-yk)**2),
+                        -1]])
+        self.Dk = Dk
+        return Dk
+
+    def covariance_estimation(self):
+        self.P_apriori = self.Ak * self.P * self.Ak.T + self.Qk
+        Sk = self.Dk * self.P_apriori * self.Dk.T + self.Rk
+        self.Wk = self.P_apriori * self.Dk.T * np.linalg.inv(Sk)
+        self.P = self.P_apriori - Wk * Sk * Wk.T
+        return
+    
+    def state_estimation(self):
+        self.x_apriori += self.u * np.cos(theta_k) * (1/speed)
+        self.y_apriori += self.u * np.sin(theta_k) * (1/speed)
+        self.t_apriori += self.E * (1/speed)
+
+        self.z_apriori = np.arctan((y_CN - self.y_apriori)/(x_CN - self.x_priori))
+
+        self.x = self.x_apriori + self.Wk * (self.z - self.z_apriori)
+
+
+        
+        
+
+
 
     
