@@ -124,15 +124,20 @@ c.bind('<B1-Motion>', draw_path)
 # Setup PID
 PID_ctrl = PID(kp=5, ki=0.00001, kd=0.5, f_dist=0.1)
 
-# Setup Kalman
-kf = Kalman(X_0=[0,0,bot.angle], Q=np.eye(3)*0.005, R=np.eye(1)*0.001, P_0=np.eye(3)*1e-5, u=1)
-
 # Add shapes for Kalman Filtering
 r = 10
 x0, y0 = grid_2_pixel(5,5)
 x1, y1 = grid_2_pixel(10,10)
 c.create_oval(x0-r, y0-r, x0+r, y0+r, fill='red')
 c.create_oval(x1-r, y1-r, x1+r, y1+r, fill='red')
+
+# Setup Kalman variables and filter class
+X_k = np.array([[0,0,bot.angle]]).T
+Q_k = np.eye(3) * 5e-3
+R_k = np.eye(1) * 1e-3
+P_k = np.eye(3) * 1e-5
+u_k = np.array([[speed,0]]).T
+kf = Kalman(X_0=X_k, dt=(1/speed), u=u_k, Q=Q_k, R=R_k, P_0=P_k, x_S=x0, y_S=y0)
 
 # Add buttons and labels
 b = Button(root, text='Run', command=PID_move, font=('Helvetica', 16), fg='black')

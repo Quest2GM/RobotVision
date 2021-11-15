@@ -398,54 +398,67 @@ class PID:
 
 class Kalman:
 
-    def __init__(self, X_0, Q, R, P_0, u):
-        self.X_0 = X_0
-        self.u = u
-        self.speed = speed
-        self.Ak, self.Bk, self.Dk = None, None, None
-        self.Wk = None
+    def __init__(self, X_0, u, dt, Q, R, P_0, x_S, y_S):
+        
+        # Initialize Scalars
+        self.dt = dt    # Time increment
+        self.x_S = x_S  # Sensor X Value
+        self.y_S = y_S  # Sensor Y Value
 
-    def update_Ak(self, theta_k):
-        Ak = np.array([[1, 0, -self.u*(1/self.speed)*np.sin(theta_k)], 
-                        [0, 1, self.u*(1/self.speed)*np.cos(theta_k)],
+        # Initialize Matrix Variables
+        self.X = X_0    # State                  [3x1]
+        self.Z = None   # Measurement            [1x1]
+        self.u = u      # Control Input (v,w)    [2x1]
+        self.Q = Q      # Process Noise          [3x3]
+        self.R = R      # Measurement Noise      [1x1]              
+        self.P = P_0    # State Covariance       [3x3]
+        self.S = None   # Measurement Covariance [1x1]
+        self.W = None   # Kalman Gain            [3x3]
+        self.A = None   # 'A' Jacobian           [3x3]
+        self.B = None   # 'B' Jacobian           [3x2]
+        self.D = None   # 'D' Jacobian           [1x3]
+
+    def predict(self, w):
+
+        # Determine A, B, D - input = theta_k
+        self.A, self.B, self.D = self.update_ABD(self.X[0][0], self.X[1][0], self.X[2][0])
+
+        # Predict apriori state covariance
+        self.P = self.A @ self.P @ self.A.T + self.Q
+
+        # Predict apriori measurement covariance
+        self.S = self.D @ self.P @ self.D.T + self.R
+
+        # Determine Kalman Gain
+        self.W = self.P @ self.D.T @ np.linalg.inv(self.S)
+
+        # Add control input w (angular velocity) - from PID control algorithm
+        self.u[1][0] = w
+
+        # Predict apriori state estimate
+        self.X = self.A @ self.X + self.B @ self.u
+
+        # Predict apriori measurement
+        self.Z = np.arctan2(self.y_S-self.X[1][0], self.x_S-self.X[0][0]) - self.X[2][0]
+
+    def update(self, z):
+        
+        # Update to aposteriori state covariance
+        self.P -= self.W @ self.S @ self.W.T
+
+        # Update to aposteriori state estimate
+        self.X += self.W @ (z-self.Z)
+
+    def update_ABD(self, xk, yk, tk):
+        Ak = np.array([[1, 0, -self.u[0][0] * self.dt * np.sin(tk)], 
+                        [0, 1, self.u[0][0] * self.dt * np.cos(tk)],
                         [0, 0, 1]])
-        self.Ak = Ak
-        return Ak
-
-    def update_Bk(self, theta_k):
-        Bk = np.array([[self.u*(1/self.speed)*np.cos(theta_k), 0],
-                       [self.u*(1/self.speed)*np.sin(theta_k), 0],
-                       [0, 1/speed]])
-        self.Bk = Bk
-        return Bk
-    
-    def update_Dk(self, x_CN, y_CN, xk, yk):
-        Dk = np.array([[(y_CN-yk)/((x_CN-xk)**2 + (y_CN-yk)**2),
-                        (xk-x_CN)/((x_CN-xk)**2 + (y_CN-yk)**2),
+        Bk = np.array([[self.u[0][0] * self.dt * np.cos(tk), 0],
+                       [self.u[0][0] * self.dt * np.sin(tk), 0],
+                       [0, self.dt]])
+        Dk = np.array([[(self.y_S-yk)/((self.x_S-xk)**2 + (self.y_S-yk)**2),
+                        (xk-self.x_S)/((self.x_S-xk)**2 + (self.y_S-yk)**2),
                         -1]])
-        self.Dk = Dk
-        return Dk
-
-    def covariance_estimation(self):
-        self.P_apriori = self.Ak * self.P * self.Ak.T + self.Qk
-        Sk = self.Dk * self.P_apriori * self.Dk.T + self.Rk
-        self.Wk = self.P_apriori * self.Dk.T * np.linalg.inv(Sk)
-        self.P = self.P_apriori - Wk * Sk * Wk.T
-        return
-    
-    def state_estimation(self):
-        self.x_apriori += self.u * np.cos(theta_k) * (1/speed)
-        self.y_apriori += self.u * np.sin(theta_k) * (1/speed)
-        self.t_apriori += self.E * (1/speed)
-
-        self.z_apriori = np.arctan((y_CN - self.y_apriori)/(x_CN - self.x_priori))
-
-        self.x = self.x_apriori + self.Wk * (self.z - self.z_apriori)
-
-
-        
-        
-
-
+        return Ak, Bk, Dk
 
     
