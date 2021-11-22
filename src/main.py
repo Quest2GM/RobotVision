@@ -79,7 +79,7 @@ def PID_move():
 
 def Kalman_move():
 
-    global path_arr, bot, sec_pass, PID_ctrl
+    global path_arr, bot, sec_pass, PID_ctrl, qerr, rerr, kf, x0, y0
 
     if True:
         
@@ -93,13 +93,27 @@ def Kalman_move():
         elif e_rot < 0:
             bot.rotateCW(r=(1/25)/E)
 
-        bot.move()
+        bot.move(noise=[0,qerr])
 
         # Kalman filtering
-        X = np.array([])
+        X = np.array([0,0,bot.angle]).reshape(3,1)
+        Z = np.arctan2(y0-X[1][0], x0-X[0][0]) - X[2][0] + np.random.normal(0, rerr, 1)[0]
+        X_pred = kf.predict(E)
+        kf.update(Z)
+
+        x_pred, y_pred = pixel_2_grid(X_pred[0][0], X_pred[1][0])
+        x_acc, y_acc = pixel_2_grid(bot.pos[0], bot.pos[1])
+        calc_error = np.sqrt((x_pred - x_acc)**2 + (y_pred - y_acc)**2)
+        print('------------------')
+        print('Prediction X: ' + str(x_pred))
+        print('Prediction Y: ' + str(y_pred))
+        print('Actual X: ' + str(x_acc))
+        print('Actual Y: ' + str(y_acc))
 
         sec_pass += 1000/speed
         l.config(text='Simulation Time (s): ' + str(float(sec_pass/1000)))
+        # l2.config(text='Predicted State / Actual State : ' + str(X_pred) + ' //// ' + str(bot.pos) + ', ' + str(bot.angle))
+        l2.config(text='Error : ' + str(calc_error))
         root.after(int(1000/speed), Kalman_move)
 
 
@@ -133,14 +147,13 @@ c.create_oval(x1-r, y1-r, x1+r, y1+r, fill='red')
 
 # Setup Kalman variables and filter class
 X_k = np.array([[0,0,bot.angle]]).T
-Q_k = np.eye(3) * 5e-3
-R_k = np.eye(1) * 1e-3
-P_k = np.eye(3) * 1e-5
+perr, qerr, rerr = 1e-5, 5e-3, 1e-3
+P_k, Q_k, R_k = np.eye(3) * perr, np.eye(3) * qerr, np.eye(1) * rerr
 u_k = np.array([[speed,0]]).T
 kf = Kalman(X_0=X_k, dt=(1/speed), u=u_k, Q=Q_k, R=R_k, P_0=P_k, x_S=x0, y_S=y0)
 
 # Add buttons and labels
-b = Button(root, text='Run', command=PID_move, font=('Helvetica', 16), fg='black')
+b = Button(root, text='Run', command=Kalman_move, font=('Helvetica', 16), fg='black')
 b.place(x=58, y=10)
 l = Label(root, text='Simulation Time (s): 0', fg='black')
 l.place(x=58, y=60)

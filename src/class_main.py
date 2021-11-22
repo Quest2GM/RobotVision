@@ -59,13 +59,13 @@ class Car:
 
 
     # Car movement
-    def move(self):
+    def move(self, noise=[0,0]):
 
         # Store current points with shorter variable names
         BP, IP, W1, W2, W3, W4 = self.body_points, self.indic_points, self.w1_points, self.w2_points, self.w3_points, self.w4_points
         
-        # Compute new coordinates
-        M = self.speed * np.array([np.cos(self.angle), -np.sin(self.angle)])
+        # Compute new coordinates (add Gaussian noise if needed)
+        M = (self.speed + np.random.normal(noise[0], noise[1], 1)[0]) * np.array([np.cos(self.angle), -np.sin(self.angle)])
 
         # Move body in the direction
         self.canvas.move(self.body, M[0], M[1])
@@ -413,7 +413,7 @@ class Kalman:
         self.R = R      # Measurement Noise      [1x1]              
         self.P = P_0    # State Covariance       [3x3]
         self.S = None   # Measurement Covariance [1x1]
-        self.W = None   # Kalman Gain            [3x3]
+        self.W = None   # Kalman Gain            [3x1]
         self.A = None   # 'A' Jacobian           [3x3]
         self.B = None   # 'B' Jacobian           [3x2]
         self.D = None   # 'D' Jacobian           [1x3]
@@ -441,13 +441,15 @@ class Kalman:
         # Predict apriori measurement
         self.Z = np.arctan2(self.y_S-self.X[1][0], self.x_S-self.X[0][0]) - self.X[2][0]
 
+        return self.X
+
     def update(self, z):
         
         # Update to aposteriori state covariance
         self.P -= self.W @ self.S @ self.W.T
 
         # Update to aposteriori state estimate
-        self.X += self.W @ (z-self.Z)
+        self.X += self.W @ (np.array([z-self.Z]).reshape(1,1))
 
     def update_ABD(self, xk, yk, tk):
         Ak = np.array([[1, 0, -self.u[0][0] * self.dt * np.sin(tk)], 
