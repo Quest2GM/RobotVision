@@ -406,21 +406,22 @@ class Kalman:
         self.y_S = y_S  # Sensor Y Value
 
         # Initialize Matrix Variables
-        self.X = X_0    # State                  [3x1]
-        self.Z = None   # Measurement            [1x1]
-        self.u = u      # Control Input (v,w)    [2x1]
-        self.Q = Q      # Process Noise          [3x3]
-        self.R = R      # Measurement Noise      [1x1]              
-        self.P = P_0    # State Covariance       [3x3]
-        self.S = None   # Measurement Covariance [1x1]
-        self.W = None   # Kalman Gain            [3x1]
-        self.A = None   # 'A' Jacobian           [3x3]
-        self.B = None   # 'B' Jacobian           [3x2]
-        self.D = None   # 'D' Jacobian           [1x3]
+        self.X = X_0        # State                  [3x1]
+        self.Z = None       # Measurement            [1x1]
+        self.u = u          # Control Input (v,w)    [2x1]
+        self.Q = Q          # Process Noise          [3x3]
+        self.R = R          # Measurement Noise      [1x1]              
+        self.P = P_0        # State Covariance       [3x3]
+        self.S = None       # Measurement Covariance [1x1]
+        self.W = None       # Kalman Gain            [3x1]
+        self.A = None       # 'A' Jacobian           [3x3]
+        self.B = None       # 'B' Jacobian           [3x2]
+        self.D = None       # 'D' Jacobian           [1x3]
+
 
     def predict(self, w):
-
-        # Determine A, B, D - input = theta_k
+        
+         # Determine A, B, D
         self.A, self.B, self.D = self.update_ABD(self.X[0][0], self.X[1][0], self.X[2][0])
 
         # Predict apriori state covariance
@@ -433,7 +434,7 @@ class Kalman:
         self.W = self.P @ self.D.T @ np.linalg.inv(self.S)
 
         # Add control input w (angular velocity) - from PID control algorithm
-        self.u[1][0] = w
+        self.u = np.array([1,w]).reshape(2,1)
 
         # Predict apriori state estimate
         self.X = self.A @ self.X + self.B @ self.u
@@ -441,7 +442,6 @@ class Kalman:
         # Predict apriori measurement
         self.Z = np.arctan2(self.y_S-self.X[1][0], self.x_S-self.X[0][0]) - self.X[2][0]
 
-        return self.X
 
     def update(self, z):
         
@@ -451,12 +451,14 @@ class Kalman:
         # Update to aposteriori state estimate
         self.X += self.W @ (np.array([z-self.Z]).reshape(1,1))
 
+        return self.X
+
     def update_ABD(self, xk, yk, tk):
         Ak = np.array([[1, 0, -self.u[0][0] * self.dt * np.sin(tk)], 
                         [0, 1, self.u[0][0] * self.dt * np.cos(tk)],
                         [0, 0, 1]])
-        Bk = np.array([[self.u[0][0] * self.dt * np.cos(tk), 0],
-                       [self.u[0][0] * self.dt * np.sin(tk), 0],
+        Bk = np.array([[self.dt * np.cos(tk), 0],
+                       [self.dt * np.sin(tk), 0],
                        [0, self.dt]])
         Dk = np.array([[(self.y_S-yk)/((self.x_S-xk)**2 + (self.y_S-yk)**2),
                         (xk-self.x_S)/((self.x_S-xk)**2 + (self.y_S-yk)**2),

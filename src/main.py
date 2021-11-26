@@ -39,7 +39,7 @@ def auto_move():
 
     if inc < speed * 100:
         bot.move()
-        bot.rotateCW(r=radius)
+        # bot.rotateCW(r=radius)
         sec_pass += 1000/speed
         inc += 1
         l.config(text='Simulation Time (s): ' + str(float(sec_pass/1000)))
@@ -84,31 +84,30 @@ def Kalman_move():
     if True:
         
         # Update gains
-        PID_ctrl.compute_dist_dir(path_arr, bot.pos, bot.angle)
-        E, e_rot = PID_ctrl.update_gains(speed)
+        # PID_ctrl.compute_dist_dir(path_arr, bot.pos, bot.angle)
+        # E, e_rot = PID_ctrl.update_gains(speed)
 
-        # PID Control
-        if e_rot > 0:
-            bot.rotateCCW(r=(1/25)/E)
-        elif e_rot < 0:
-            bot.rotateCW(r=(1/25)/E)
-
-        bot.move(noise=[0,qerr])
+        # # PID Control
+        # if e_rot > 0:
+        #     bot.rotateCCW(r=(1/25)/E)
+        # elif e_rot < 0:
+        #     bot.rotateCW(r=(1/25)/E)
 
         # Kalman filtering
-        X = np.array([0,0,bot.angle]).reshape(3,1)
-        Z = np.arctan2(y0-X[1][0], x0-X[0][0]) - X[2][0] + np.random.normal(0, rerr, 1)[0]
-        X_pred = kf.predict(E)
-        kf.update(Z)
+        x_pos, y_pos = pixel_2_grid(*bot.pos)
+        bot.move(noise=[0,qerr])
 
-        x_pred, y_pred = pixel_2_grid(X_pred[0][0], X_pred[1][0])
-        x_acc, y_acc = pixel_2_grid(bot.pos[0], bot.pos[1])
-        calc_error = np.sqrt((x_pred - x_acc)**2 + (y_pred - y_acc)**2)
-        print('------------------')
-        print('Prediction X: ' + str(x_pred))
-        print('Prediction Y: ' + str(y_pred))
-        print('Actual X: ' + str(x_acc))
-        print('Actual Y: ' + str(y_acc))
+        Z = np.arctan2(kf.y_S - y_pos, kf.x_S - x_pos) + np.random.normal(0, rerr, 1)[0] - bot.angle
+        # print('Meas: ' + str(rad_2_deg(Z)))
+
+        kf.predict(0)
+        x_pred = kf.update(Z)
+        x_pos, y_pos = pixel_2_grid(*bot.pos)
+
+        calc_error = np.sqrt((x_pred[0][0]-x_pos)**2 + (x_pred[1][0]-y_pos)**2)
+
+        print('X_true: ' + str(x_pos) + ', ' + str(y_pos) + ', ' + str(bot.angle))
+        print('X_pred: ' + str(x_pred[0][0]) + ', ' + str(x_pred[1][0]) + ', ' + str(x_pred[2][0]))
 
         sec_pass += 1000/speed
         l.config(text='Simulation Time (s): ' + str(float(sec_pass/1000)))
@@ -116,6 +115,45 @@ def Kalman_move():
         l2.config(text='Error : ' + str(calc_error))
         root.after(int(1000/speed), Kalman_move)
 
+def Kalman_move_2():
+
+    global path_arr, bot, sec_pass, PID_ctrl, qerr, rerr, kf, x0, y0, inc
+
+    if inc < 2:
+
+        print('\n###################')
+        print('# Increment ' + str(inc))
+        print('###################\n')
+
+        print('P: ', kf.P)
+        print('Q: ', kf.Q)
+        print('R: ', kf.R)
+        print('X: ', kf.X)
+        A, B, D = kf.update_ABD(kf.X[0][0], kf.X[1][0], kf.X[2][0])
+        print('A: ', A)
+        print('B: ', B)
+        print('D: ', D)
+        print('x_CN: ', kf.x_S)
+        print('y_CN: ', kf.y_S)
+        x_pos, y_pos = pixel_2_grid(*bot.pos)
+        print('bot pos: ', [x_pos, y_pos])
+
+        bot.move(noise=[0,0])
+
+        Z = np.arctan2(kf.y_S - y_pos, kf.x_S - x_pos)
+        print('Z sens: ', rad_2_deg(Z))
+        kf.predict(0)
+
+        print('W: ', kf.W)
+        print('P k+1|k: ', kf.P)
+        print('S k+1: ', kf.S)
+
+        kf.update(Z)
+        
+        root.after(int(1000/speed), Kalman_move)
+        inc += 1
+
+    
 
 def get_x_and_y(event):
     global lasx, lasy, path_arr
@@ -140,17 +178,16 @@ PID_ctrl = PID(kp=5, ki=0.00001, kd=0.5, f_dist=0.1)
 
 # Add shapes for Kalman Filtering
 r = 10
-x0, y0 = grid_2_pixel(5,5)
-x1, y1 = grid_2_pixel(10,10)
-c.create_oval(x0-r, y0-r, x0+r, y0+r, fill='red')
+x0, y0 = 5, 5
+x1, y1 = grid_2_pixel(x0,y0)
 c.create_oval(x1-r, y1-r, x1+r, y1+r, fill='red')
 
 # Setup Kalman variables and filter class
 X_k = np.array([[0,0,bot.angle]]).T
 perr, qerr, rerr = 1e-5, 5e-3, 1e-3
 P_k, Q_k, R_k = np.eye(3) * perr, np.eye(3) * qerr, np.eye(1) * rerr
-u_k = np.array([[speed,0]]).T
-kf = Kalman(X_0=X_k, dt=(1/speed), u=u_k, Q=Q_k, R=R_k, P_0=P_k, x_S=x0, y_S=y0)
+u_k = np.array([[1,0]]).T
+kf = Kalman(X_0=X_k, dt=0.04, u=u_k, Q=Q_k, R=R_k, P_0=P_k, x_S=x0, y_S=y0)
 
 # Add buttons and labels
 b = Button(root, text='Run', command=Kalman_move, font=('Helvetica', 16), fg='black')
