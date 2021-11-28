@@ -422,7 +422,7 @@ class Kalman:
     def predict(self, w):
         
          # Determine A, B, D
-        self.A, self.B, self.D = self.update_ABD(self.X[0][0], self.X[1][0], self.X[2][0])
+        self.A, self.B, self.D = self.update_ABD(self.X[0][0], self.X[1][0], self.X[2][0], w)
 
         # Predict apriori state covariance
         self.P = self.A @ self.P @ self.A.T + self.Q
@@ -440,12 +440,14 @@ class Kalman:
         self.X = self.A @ self.X + self.B @ self.u
 
         # Predict apriori measurement
-        Z1 = np.arctan2(self.y_S-self.X[1][0], self.x_S-self.X[0][0]) - self.X[2][0]
+        x_CN, y_CN = pixel_2_grid(self.x_S, self.y_S)
+        x_pos, y_pos = pixel_2_grid(self.X[0][0], self.X[1][0])
+        Z1 = np.arctan2(y_CN-y_pos, x_CN-x_pos) - self.X[2][0]
         Z2 = np.sqrt((self.x_S-self.X[0][0])**2 + (self.y_S-self.X[1][0])**2)
-        Z3 = rad_2_deg(Z2)
         self.Z = np.array([Z1, Z2]).reshape(2,1)
+
         print('Predicted X: ', self.X)
-        print('Predicted Z: ', self.Z)
+        print('Predicted Z: ', np.array([Z1,Z2]).reshape(2,1))
 
 
     def update(self, Z_meas):
@@ -458,12 +460,12 @@ class Kalman:
 
         return self.X
 
-    def update_ABD(self, xk, yk, tk):
-        Ak = np.array([[1, 0, -self.u[0][0] * self.dt * np.sin(tk)], 
-                        [0, 1, self.u[0][0] * self.dt * np.cos(tk)],
-                        [0, 0, 1]])
-        Bk = np.array([[self.dt * np.cos(tk), 0],
-                       [self.dt * np.sin(tk), 0],
+    def update_ABD(self, xk, yk, tk, wk):
+        Ak = np.array([[1, 0, -self.u[0][0] * self.dt * np.sin(tk + wk*self.dt)], 
+                       [0, 1, -self.u[0][0] * self.dt * np.cos(tk + wk*self.dt)],
+                       [0, 0, 1]])
+        Bk = np.array([[np.cos(tk + wk*self.dt), -self.dt * np.sin(tk + wk*self.dt)],
+                       [-np.sin(tk + wk*self.dt), -self.dt * np.cos(tk + wk*self.dt)],
                        [0, self.dt]])
 
         d = np.sqrt((self.x_S-xk)**2 + (self.y_S-yk)**2)
