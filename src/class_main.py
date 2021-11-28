@@ -440,16 +440,21 @@ class Kalman:
         self.X = self.A @ self.X + self.B @ self.u
 
         # Predict apriori measurement
-        self.Z = np.arctan2(self.y_S-self.X[1][0], self.x_S-self.X[0][0]) - self.X[2][0]
+        Z1 = np.arctan2(self.y_S-self.X[1][0], self.x_S-self.X[0][0]) - self.X[2][0]
+        Z2 = np.sqrt((self.x_S-self.X[0][0])**2 + (self.y_S-self.X[1][0])**2)
+        Z3 = rad_2_deg(Z2)
+        self.Z = np.array([Z1, Z2]).reshape(2,1)
+        print('Predicted X: ', self.X)
+        print('Predicted Z: ', self.Z)
 
 
-    def update(self, z):
+    def update(self, Z_meas):
         
         # Update to aposteriori state covariance
         self.P -= self.W @ self.S @ self.W.T
 
         # Update to aposteriori state estimate
-        self.X += self.W @ (np.array([z-self.Z]).reshape(1,1))
+        self.X += self.W @ (Z_meas-self.Z)
 
         return self.X
 
@@ -460,9 +465,11 @@ class Kalman:
         Bk = np.array([[self.dt * np.cos(tk), 0],
                        [self.dt * np.sin(tk), 0],
                        [0, self.dt]])
-        Dk = np.array([[(self.y_S-yk)/((self.x_S-xk)**2 + (self.y_S-yk)**2),
-                        (xk-self.x_S)/((self.x_S-xk)**2 + (self.y_S-yk)**2),
-                        -1]])
+
+        d = np.sqrt((self.x_S-xk)**2 + (self.y_S-yk)**2)
+        Dk = np.array([[(self.y_S-yk)/(d**2), (xk-self.x_S)/(d**2), -1],
+                       [(xk-self.x_S)/d, (yk-self.y_S)/d, 0]])
+        
         return Ak, Bk, Dk
 
     
