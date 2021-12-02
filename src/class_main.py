@@ -33,6 +33,7 @@ class Car:
 
         # Pose - self.pos[0] = x-coordinate, self.pos[1] = y-coordinate, self.angle = orientation
         self.pos, self.angle = np.zeros(2), deg_2_rad(0)
+        self.MX = None
 
     # Builds the Car in the Canvas
     def build(self, S):
@@ -65,6 +66,7 @@ class Car:
         BP, IP, W1, W2, W3, W4 = self.body_points, self.indic_points, self.w1_points, self.w2_points, self.w3_points, self.w4_points
         
         # Compute new coordinates (add Gaussian noise if needed)
+        self.MX = self.pos + self.speed * np.array([np.cos(self.angle), -np.sin(self.angle)])
         M = (self.speed + np.random.normal(noise[0], noise[1], 1)[0]) * np.array([np.cos(self.angle), -np.sin(self.angle)])
 
         # Move body in the direction
@@ -419,25 +421,31 @@ class Kalman:
         self.D = None       # 'D' Jacobian           [1x3]
 
 
-    def predict(self, w):
+    def predict(self, w, f):
         
          # Determine A, B, D
-        self.A, self.B, self.D = self.update_ABD(self.X[0][0], self.X[1][0], self.X[2][0], w)
+        self.A, self.B, self.D = self.update_ABD(self.X[0][0], self.X[1][0], self.X[2][0], w, f)
 
         # Predict apriori state covariance
         self.P = self.A @ self.P @ self.A.T + self.Q
-
-        # Predict apriori measurement covariance
-        self.S = self.D @ self.P @ self.D.T + self.R
-
-        # Determine Kalman Gain
-        self.W = self.P @ self.D.T @ np.linalg.inv(self.S)
 
         # Add control input w (angular velocity) - from PID control algorithm
         self.u = np.array([1,w]).reshape(2,1)
 
         # Predict apriori state estimate
         self.X = self.A @ self.X + self.B @ self.u
+
+
+    def update(self, Z_meas, curr_dist):
+
+        if curr_dist > 100:
+            return self.X
+
+         # Predict apriori measurement covariance
+        self.S = self.D @ self.P @ self.D.T + self.R
+
+        # Determine Kalman Gain
+        self.W = self.P @ self.D.T @ np.linalg.inv(self.S)
 
         # Predict apriori measurement
         x_CN, y_CN = pixel_2_grid(self.x_S, self.y_S)
@@ -448,9 +456,6 @@ class Kalman:
 
         print('Predicted X: ', self.X)
         print('Predicted Z: ', np.array([Z1,Z2]).reshape(2,1))
-
-
-    def update(self, Z_meas):
         
         # Update to aposteriori state covariance
         self.P -= self.W @ self.S @ self.W.T
@@ -460,13 +465,13 @@ class Kalman:
 
         return self.X
 
-    def update_ABD(self, xk, yk, tk, wk):
-        Ak = np.array([[1, 0, -self.u[0][0] * self.dt * np.sin(tk + wk*self.dt)], 
-                       [0, 1, -self.u[0][0] * self.dt * np.cos(tk + wk*self.dt)],
+    def update_ABD(self, xk, yk, tk, wk, f):
+        Ak = np.array([[1, 0, -f*self.dt * np.sin(tk + f*wk*self.dt)], 
+                       [0, 1, -f*self.dt * np.cos(tk + f*wk*self.dt)],
                        [0, 0, 1]])
-        Bk = np.array([[np.cos(tk + wk*self.dt), -self.dt * np.sin(tk + wk*self.dt)],
-                       [-np.sin(tk + wk*self.dt), -self.dt * np.cos(tk + wk*self.dt)],
-                       [0, self.dt]])
+        Bk = np.array([[np.cos(tk + f*wk*self.dt), -f*self.dt * np.sin(tk + f*wk*self.dt)],
+                       [-np.sin(tk + f*wk*self.dt), -f*self.dt * np.cos(tk + f*wk*self.dt)],
+                       [0, f*self.dt]])
 
         d = np.sqrt((self.x_S-xk)**2 + (self.y_S-yk)**2)
         Dk = np.array([[(self.y_S-yk)/(d**2), (xk-self.x_S)/(d**2), -1],
