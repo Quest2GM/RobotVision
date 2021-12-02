@@ -1,12 +1,16 @@
 import numpy as np
 import time
-from func_main import *
-
-import numpy as np
 from scipy.spatial.distance import cdist
+
+from func_main import *
 
 # Avoid division by zero warning
 np.seterr(divide='ignore')
+
+#############
+# Car Class
+#   - Builds the bot and helps move and rotate around in space
+#############
 
 class Car:
 
@@ -27,13 +31,8 @@ class Car:
         self.speed = 1
         self.rot_inc = deg_2_rad(0)
 
-        # Other properties
-        self.mass = 1   # Unit: kg
-        self.turn_radius = 1
-
         # Pose - self.pos[0] = x-coordinate, self.pos[1] = y-coordinate, self.angle = orientation
         self.pos, self.angle = np.zeros(2), deg_2_rad(0)
-        self.MX = None
 
     # Builds the Car in the Canvas
     def build(self, S):
@@ -58,7 +57,6 @@ class Car:
         # Rotate if necessary
         self.rotate_main(dir=1)
 
-
     # Car movement
     def move(self, noise=[0,0]):
 
@@ -66,7 +64,6 @@ class Car:
         BP, IP, W1, W2, W3, W4 = self.body_points, self.indic_points, self.w1_points, self.w2_points, self.w3_points, self.w4_points
         
         # Compute new coordinates (add Gaussian noise if needed)
-        self.MX = self.pos + self.speed * np.array([np.cos(self.angle), -np.sin(self.angle)])
         M = (self.speed + np.random.normal(noise[0], noise[1], 1)[0]) * np.array([np.cos(self.angle), -np.sin(self.angle)])
 
         # Move body in the direction
@@ -145,6 +142,11 @@ class Car:
         X = np.matmul(C, V.reshape(2,-1))
         return X.reshape(1,2) + self.pos
 
+##########################
+# Dubin's Path Calculator
+#   - Supposed to find the minimum distance path for a non-holonomic vehicle
+#   - Does not work as of 12/2/2021
+##########################
 
 class Dubin:
 
@@ -354,14 +356,27 @@ class Dubin:
         return None
 
 
+#####################
+# PID Control Class
+#   - PID controller to help bot follow manually drawn path
+#####################
+
 class PID:
 
     def __init__(self, kp, ki, kd, f_dist):
+
+        # PID gains
         self.kp, self.ki, self.kd = kp, ki, kd
-        self.P, self.I, self.D, self.LE = 0, 0, 0, 0
-        self.e_rot = None
-        self.E = None
+
+        # Non-zero distance away to follow the path (non-zero ensures stability of integral term)
         self.f_dist = f_dist
+
+        # PID terms
+        self.P, self.I, self.D, self.LE = 0, 0, 0, 0
+
+        # E_rot determines which direction to rotate, E is the PID angular velocity
+        self.e_rot, self.E = None, None
+
 
     def compute_dist_dir(self, path_arr, bot_pos, bot_angle):
 
@@ -388,6 +403,7 @@ class PID:
 
     def update_gains(self, speed):
 
+        # Determine angular velocity
         self.E = self.kp * self.P + self.ki * self.I + self.kd * self.D
 
         # Correct I and D terms
@@ -395,10 +411,16 @@ class PID:
         self.D = (self.P - self.LE)/(1/speed)
         self.LE = self.P
 
+        # Return results
         return self.E, self.e_rot
 
 
-class Kalman:
+#####################
+# EKF Class
+#   - Sets up an extended kalman filter algorithm
+#####################
+
+class EKF:
 
     def __init__(self, X_0, u, dt, Q, R, P_0, x_S, y_S):
         
@@ -435,13 +457,13 @@ class Kalman:
         # Predict apriori state estimate
         self.X = self.A @ self.X + self.B @ self.u
 
-
-    def update(self, Z_meas, curr_dist):
-
-        if curr_dist > 100:
+    def update(self, Z_meas, curr_dist, d_range):
+        
+        # If the robot is not within detectable range of the lighthouse, we cannot implement filtering
+        if curr_dist > d_range:
             return self.X
 
-         # Predict apriori measurement covariance
+        # Predict apriori measurement covariance
         self.S = self.D @ self.P @ self.D.T + self.R
 
         # Determine Kalman Gain
@@ -453,10 +475,7 @@ class Kalman:
         Z1 = np.arctan2(y_CN-y_pos, x_CN-x_pos) - self.X[2][0]
         Z2 = np.sqrt((self.x_S-self.X[0][0])**2 + (self.y_S-self.X[1][0])**2)
         self.Z = np.array([Z1, Z2]).reshape(2,1)
-
-        print('Predicted X: ', self.X)
-        print('Predicted Z: ', np.array([Z1,Z2]).reshape(2,1))
-        
+       
         # Update to aposteriori state covariance
         self.P -= self.W @ self.S @ self.W.T
 
@@ -466,6 +485,8 @@ class Kalman:
         return self.X
 
     def update_ABD(self, xk, yk, tk, wk, f):
+
+        # A, B, D Jacobian matrix calculators - see Github for derivation
         Ak = np.array([[1, 0, -f*self.dt * np.sin(tk + f*wk*self.dt)], 
                        [0, 1, -f*self.dt * np.cos(tk + f*wk*self.dt)],
                        [0, 0, 1]])
