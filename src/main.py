@@ -83,7 +83,8 @@ def EKF_move():
     global sim_time, c
 
     # Update PID gains
-    PID_ctrl.compute_dist_dir(draw_arr, bot.pos, bot.angle)
+    A = range_2_pi(bot.angle)
+    PID_ctrl.compute_dist_dir(draw_arr, bot.pos, A)
     E, e_rot = PID_ctrl.update_gains(speed)
 
     # Rotate the bot CW or CCW depending on cross-product result and then incrementally move forward (with error)
@@ -91,7 +92,7 @@ def EKF_move():
         bot.rotateCCW(r=(1/25)/E)
     elif e_rot < 0:
         bot.rotateCW(r=(1/25)/E)
-    bot.move(noise=[0,qerr])
+    bot.move(noise=[0,0])
 
     ### Extended Kalman Filter Algorithm: ###
     
@@ -103,7 +104,11 @@ def EKF_move():
     f = e_rot/np.abs(e_rot)
 
     # Simulate noisy measurement. Z1 = angle to lighthouse, Z2 = distance to lighthouse
-    Z1 = np.arctan2(y_CN - y_pos, x_CN - x_pos) - bot.angle
+    Z11 = np.arctan2(y_CN - y_pos, x_CN - x_pos)
+    Z12 = bot.angle
+    Z11 = range_2_pi(Z11)
+    Z12 = range_2_pi(Z12)
+    Z1 = Z11 - Z12
     Z2 = np.sqrt((ekf.x_S - bot.pos[0])**2 + (ekf.y_S - bot.pos[1])**2)
     Z = np.array([Z1, Z2]).reshape(2,1) + np.random.multivariate_normal([0,0], cov=ekf.R).reshape(2,1)
 
@@ -113,7 +118,7 @@ def EKF_move():
 
     # Visually track estimation on screen
     c1, c2 = x_pred[0][0], x_pred[1][0]
-    c.create_oval(c1-2, c2-2, c1+2, c2+2, fill='cyan')
+    c.create_oval(c1-2, c2-2, c1+2, c2+2, fill='cyan', outline='')
 
     # Absolute error between prediction and actual
     x_pos, y_pos = pixel_2_grid(*bot.pos)
@@ -143,7 +148,7 @@ if __name__ == '__main__':
     ### Setup Kalman Filter ###
 
     # Create lighthouse and the detection range circle
-    r, detect_range = 10, 100
+    r, detect_range = 10, 200
     x1, y1 = grid_2_pixel(10, 1)
     c.create_oval(x1-detect_range, y1-detect_range, x1+detect_range, y1+detect_range, fill='white')
     c.create_oval(x1-r, y1-r, x1+r, y1+r, fill='red')

@@ -20,3 +20,7 @@ def deg_2_rad(a):
 # Calculate Distance
 def dist(x1, y1, x2, y2):
     return np.sqrt(np.power(x2-x1,2) + np.power(y2-y1,2))
+
+# Convert angles between -pi and pi
+def range_2_pi(val):
+    return np.where(val > np.pi, val - 2*np.pi, val)

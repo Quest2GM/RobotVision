@@ -456,6 +456,7 @@ class EKF:
 
         # Predict apriori state estimate
         self.X = self.A @ self.X + self.B @ self.u
+        self.X[2][0] = range_2_pi(self.X[2][0])
 
     def update(self, Z_meas, curr_dist, d_range):
         
@@ -472,7 +473,11 @@ class EKF:
         # Predict apriori measurement
         x_CN, y_CN = pixel_2_grid(self.x_S, self.y_S)
         x_pos, y_pos = pixel_2_grid(self.X[0][0], self.X[1][0])
-        Z1 = np.arctan2(y_CN-y_pos, x_CN-x_pos) - self.X[2][0]
+        Z11 = np.arctan2(y_CN-y_pos, x_CN-x_pos)
+        Z12 = self.X[2][0]
+        Z11 = range_2_pi(Z11)
+        Z12 = range_2_pi(Z12)
+        Z1 = Z11 - Z12
         Z2 = np.sqrt((self.x_S-self.X[0][0])**2 + (self.y_S-self.X[1][0])**2)
         self.Z = np.array([Z1, Z2]).reshape(2,1)
        
@@ -481,6 +486,7 @@ class EKF:
 
         # Update to aposteriori state estimate
         self.X += self.W @ (Z_meas-self.Z)
+        self.X[2][0] = range_2_pi(self.X[2][0])
 
         return self.X
 
