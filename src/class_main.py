@@ -431,16 +431,16 @@ class EKF:
 
         # Initialize Matrix Variables
         self.X = X_0        # State                  [3x1]
-        self.Z = None       # Measurement            [1x1]
+        self.Z = None       # Measurement            [2x1]
         self.u = u          # Control Input (v,w)    [2x1]
         self.Q = Q          # Process Noise          [3x3]
         self.R = R          # Measurement Noise      [1x1]              
         self.P = P_0        # State Covariance       [3x3]
-        self.S = None       # Measurement Covariance [1x1]
+        self.S = None       # Measurement Covariance [2x2]
         self.W = None       # Kalman Gain            [3x1]
         self.A = None       # 'A' Jacobian           [3x3]
         self.B = None       # 'B' Jacobian           [3x2]
-        self.D = None       # 'D' Jacobian           [1x3]
+        self.D = None       # 'D' Jacobian           [2x3]
 
 
     def predict(self, w, f):
@@ -456,6 +456,8 @@ class EKF:
 
         # Predict apriori state estimate
         self.X = self.A @ self.X + self.B @ self.u
+        # tk = self.X[2][0]
+        # self.X += np.array([np.cos(tk + f*w*self.dt), -np.sin(tk + f*w*self.dt), f*w*self.dt]).reshape(3,1)
         self.X[2][0] = range_2_pi(self.X[2][0])
 
     def update(self, Z_meas, curr_dist, d_range):
@@ -473,16 +475,13 @@ class EKF:
         # Predict apriori measurement
         x_CN, y_CN = pixel_2_grid(self.x_S, self.y_S)
         x_pos, y_pos = pixel_2_grid(self.X[0][0], self.X[1][0])
-        Z11 = np.arctan2(y_CN-y_pos, x_CN-x_pos)
-        Z12 = self.X[2][0]
-        Z11 = range_2_pi(Z11)
-        Z12 = range_2_pi(Z12)
+        Z11, Z12 = range_2_pi(np.arctan2(y_CN-y_pos, x_CN-x_pos)), range_2_pi(self.X[2][0])
         Z1 = Z11 - Z12
         Z2 = np.sqrt((self.x_S-self.X[0][0])**2 + (self.y_S-self.X[1][0])**2)
         self.Z = np.array([Z1, Z2]).reshape(2,1)
        
         # Update to aposteriori state covariance
-        self.P -= self.W @ self.S @ self.W.T
+        self.P -= self.W @ self.D @ self.P
 
         # Update to aposteriori state estimate
         self.X += self.W @ (Z_meas-self.Z)
@@ -506,4 +505,48 @@ class EKF:
         
         return Ak, Bk, Dk
 
+
+#####################
+# SLAM Class
+#   - Sets up an EKF-based SLAM algorithm
+#####################
+
+class SLAM:
+
+    def __init__(self, X_0, dt, Q, R, P_0, num_obs, obs_arr):
+        
+        # Initialize Scalars
+        self.dt = dt            # Time increment
+        self.num_obs = num_obs  # Maximum number of obstacles that can be observed
+        self.obs_arr = obs_arr  # True locations of all obstacles
+
+        # Initialize Matrix Variables
+        self.X = X_0        # State
+        self.Z = None       # Measurement
+        self.Q = Q          # Process Noise
+        self.R = R          # Measurement Noise         
+        self.P = P_0        # State Covariance
+        self.S = None       # Measurement Covariance
+        self.W = None       # Kalman Gain
+        self.A = None       # 'A' Jacobian
+        self.B = None       # 'B' Jacobian
+        self.D = None       # 'D' Jacobian
+
+    def predict(self, f, tk, wk):
+
+        # Define Fx
+        Fx = np.concatenate(np.eye(3), np.zeros(3, self.num_obs * 2))
+
+        # Predict State
+        self.X += Fx.T @ np.array([np.cos(tk + f*wk*self.dt), np.sin(tk + f*wk*self.dt), wk*self.dt]).reshape(3,1)
+
+        # Find Jacobian Matrix A
+        self.A = Fx.T @ np.array([[1, 0, -f*self.dt * np.sin(tk + f*wk*self.dt)], 
+                                  [0, 1, -f*self.dt * np.cos(tk + f*wk*self.dt)],
+                                  [0, 0, 1]]) @ Fx
+        
+        # Find covariance estimate
+        self.P = self.A @ self.P @ self.A.T + Fx.T @ self.R @ Fx
     
+    def update(self):
+        self.x = x
