@@ -513,7 +513,7 @@ class EKF:
 
 class SLAM:
 
-    def __init__(self, X_0, dt, Q, R, P_0, num_obs, obs_arr):
+    def __init__(self, X_0, Fx, dt, Q, R, P_0, num_obs, obs_arr):
         
         # Initialize Scalars
         self.dt = dt            # Time increment
@@ -522,6 +522,7 @@ class SLAM:
 
         # Initialize Matrix Variables
         self.X = X_0        # State
+        self.Fx = Fx        # Conversion Matrix
         self.Z = None       # Measurement
         self.Q = Q          # Process Noise
         self.R = R          # Measurement Noise         
@@ -532,21 +533,55 @@ class SLAM:
         self.B = None       # 'B' Jacobian
         self.D = None       # 'D' Jacobian
 
-    def predict(self, f, tk, wk):
-
-        # Define Fx
-        Fx = np.concatenate(np.eye(3), np.zeros(3, self.num_obs * 2))
-
-        # Predict State
-        self.X += Fx.T @ np.array([np.cos(tk + f*wk*self.dt), np.sin(tk + f*wk*self.dt), wk*self.dt]).reshape(3,1)
+    def predict(self, w, f):
 
         # Find Jacobian Matrix A
-        self.A = Fx.T @ np.array([[1, 0, -f*self.dt * np.sin(tk + f*wk*self.dt)], 
-                                  [0, 1, -f*self.dt * np.cos(tk + f*wk*self.dt)],
-                                  [0, 0, 1]]) @ Fx
+        self.A = self.Fx.T @ np.array([[1, 0, -f*self.dt * np.sin(self.X[2][0] + f*w*self.dt)], 
+                                       [0, 1, -f*self.dt * np.cos(self.X[2][0] + f*w*self.dt)],
+                                       [0, 0, 1]]) @ self.Fx
         
         # Find covariance estimate
-        self.P = self.A @ self.P @ self.A.T + Fx.T @ self.R @ Fx
+        self.P = self.A @ self.P @ self.A.T + self.Fx.T @ self.Q @ self.Fx
+
+        # Predict State
+        tk = self.X[2][0]
+        self.X += self.Fx.T @ np.array([np.cos(tk + f*w*self.dt), -np.sin(tk + f*w*self.dt), f*w*self.dt]).reshape(3,1)
+        self.X[2][0] = range_2_pi(self.X[2][0])
+
     
-    def update(self):
-        self.x = x
+    def update(self, Z_meas, obs_loc, obs_ind):
+
+        # Compute Fxj
+        add_Z = np.zeros((2,2*self.num_obs+3))
+        add_Z[0][3+2*(obs_ind)], add_Z[1][3+2*(obs_ind)+1] = 1, 1
+        Fxj = np.concatenate((self.Fx, add_Z), axis=0)
+
+        # Compute low dimensional D Jacobian and then high dimensional version D Jacobian
+        xk, yk = self.X[0][0], self.X[1][0]
+        d = np.sqrt((obs_loc[0]-xk)**2 + (obs_loc[1]-yk)**2)
+        low_D = np.array([[(obs_loc[1]-yk)/(d**2), -(obs_loc[0]-xk)/(d**2), -1, -(obs_loc[1]-yk)/(d**2), (obs_loc[0]-xk)/(d**2)],
+                          [-(obs_loc[0]-xk)/d, -(obs_loc[1]-yk)/d, 0, (obs_loc[0]-xk)/d, (obs_loc[1]-yk)/d]])
+        self.D = low_D @ Fxj
+
+        # Predict apriori measurement covariance
+        self.S = self.D @ self.P @ self.D.T + self.R
+
+        # Determine Kalman Gain
+        self.W = self.P @ self.D.T @ np.linalg.inv(self.S)
+
+        # Need to add measurement
+        p_obs_loc = pixel_2_grid(*obs_loc)
+        x_pos, y_pos = pixel_2_grid(self.X[0][0], self.X[1][0])
+        Z11, Z12 = range_2_pi(np.arctan2(p_obs_loc[1]-y_pos, p_obs_loc[0]-x_pos)), range_2_pi(self.X[2][0])
+        Z1 = Z11 - Z12
+        Z2 = np.sqrt((obs_loc[0]-self.X[0][0])**2 + (obs_loc[1]-self.X[1][0])**2)
+        self.Z = np.array([Z1, Z2]).reshape(2,1)
+
+        # Update to aposteriori state covariance
+        self.P -= self.W @ self.D @ self.P
+
+        # Update to aposteriori state estimate
+        self.X += self.W @ (Z_meas-self.Z)
+        self.X[2][0] = range_2_pi(self.X[2][0])
+
+        return self.X
