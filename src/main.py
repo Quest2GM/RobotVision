@@ -181,9 +181,10 @@ def SLAM_move():
         # Initialize the X_obj location if it has not been done already
         j1, j2 = 2*ind + 3, 2*ind + 4
 
-        # Predict object location 
-        slam.X[j1][0] = slam.X[0][0] + Z[1][0] * np.cos(Z[0][0] + Z12)
-        slam.X[j2][0] = slam.X[1][0] - Z[1][0] * np.sin(Z[0][0] + Z12)
+        # Predict object location
+        if slam.X[j1][0] == 0 and slam.X[j2][0] == 0:
+            slam.X[j1][0] = slam.X[0][0] + Z[1][0] * np.cos(Z[0][0] + Z12)
+            slam.X[j2][0] = slam.X[1][0] - Z[1][0] * np.sin(Z[0][0] + Z12)
 
         # SLAM Update
         x_pred = slam.update(Z, obs_arr[ind], ind)
@@ -251,7 +252,7 @@ if __name__ == '__main__':
     # Setup Kalman variables and SLAM class
     X_k = np.concatenate((np.array([[bot.pos[0],bot.pos[1],bot.angle]]).reshape(3,1), np.zeros((2*num_obs,1))), axis=0)
     Fx = np.concatenate((np.eye(3), np.zeros((3, 2*num_obs))), axis=1)
-    perr, qerr, rerr = 1e-5, 5e-3, 1e-3
+    perr, qerr, rerr = 1e-5, 50e-3, 5e-3
     P_k, Q_k, R_k = np.eye(3) * perr, np.eye(3) * qerr, np.eye(2) * rerr
     P_k = Fx.T @ P_k @ Fx
     slam = SLAM(X_0=X_k, Fx=Fx, dt=0.04, Q=Q_k, R=R_k, P_0=P_k, num_obs=num_obs, obs_arr=obs_arr)
