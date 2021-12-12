@@ -581,7 +581,7 @@ class SLAM:
         self.P -= self.W @ self.D @ self.P
 
         # Update to aposteriori state estimate
-        self.X += self.W @ (Z_meas-self.Z)
-        self.X[2][0] = range_2_pi(self.X[2][0])
+        # self.X += self.W @ (Z_meas-self.Z)
+        # self.X[2][0] = range_2_pi(self.X[2][0])
 
         return self.X
