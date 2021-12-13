@@ -1,5 +1,6 @@
 import numpy as np
 import time
+import scipy
 from scipy.spatial.distance import cdist
 
 from func_main import *
@@ -445,7 +446,7 @@ class EKF:
 
     def predict(self, w, f):
         
-         # Determine A, B, D
+        # Determine A, B, D
         self.A, self.B, self.D = self.update_ABD(self.X[0][0], self.X[1][0], self.X[2][0], w, f)
 
         # Predict apriori state covariance
@@ -585,3 +586,148 @@ class SLAM:
         self.X[2][0] = range_2_pi(self.X[2][0])
 
         return self.X
+
+
+#####################
+# UKF Class
+#   - Sets up an unscented kalman filter
+#####################
+
+class UKF:
+
+    def __init__(self, X_0, dt, Q, R, P_0, x_S, y_S):
+        
+        # Initialize Scalars
+        self.N = X_0.shape[0]       # Number of dimensions = dimension of state vector (=3 in our case)
+        self.L = 3 - self.N         # Supposed optimal choice for lambda (scaling parameter)
+        self.dt = dt                # Time increment     
+        self.x_S = x_S              # Lighthouse location X
+        self.y_S = y_S              # Lighthouse location Y
+        self.f, self.w = None, None
+
+        # Initialize Matrix Variables
+        self.X = X_0        # State
+        self.P = P_0        # State covariance
+        self.Q = Q          # Process noise
+        self.R = R          # Measurement noise
+        self.S = None       # Measurement Covariance
+        self.Z = None       # Measurement
+        self.W = None       # Kalman gain
+
+
+    def predict(self, w, f):
+
+        # Compute square root of P = cholesky factor
+        print(self.P)
+        SR = np.array(scipy.linalg.cholesky((self.N + self.L) * self.P))
+
+        # Create X_chi (sigma points)
+        mu_0 = self.X
+        mu_1, mu_4 = mu_0 + SR[0,:].reshape(3,1), mu_0 - SR[0,:].reshape(3,1)
+        mu_2, mu_5 = mu_0 + SR[1,:].reshape(3,1), mu_0 - SR[1,:].reshape(3,1)
+        mu_3, mu_6 = mu_0 + SR[2,:].reshape(3,1), mu_0 - SR[2,:].reshape(3,1)
+        X_chi = np.concatenate((mu_0, mu_1, mu_2, mu_3, mu_4, mu_5, mu_6), axis=1)
+
+        # Predict apriori state
+        self.X = np.zeros((3,1))
+        for i in range(2 * self.N + 1):
+            if i == 0:
+                self.X += (self.L/(self.N+self.L)) * self.g(X_chi[:,i].reshape(3,1), w, f)
+            else:
+                self.X += (0.5 * 1/(self.N+self.L)) * self.g(X_chi[:,i].reshape(3,1), w, f)
+        
+        # Predict apriori covariance
+        self.P = np.zeros((self.N, self.N))
+        for i in range(2 * self.N + 1):
+            gX = self.g(X_chi[:,i].reshape(3,1), w, f)
+            if i == 0:
+                self.P += (self.L/(self.N+self.L)) * np.outer(gX-self.X, gX-self.X)
+            else:
+                self.P += (0.5 * 1/(self.N+self.L)) * np.outer(gX-self.X, gX-self.X)
+        self.P += self.Q
+
+        # Track f and w
+        self.f = f
+        self.w = w
+
+
+    def update(self, Z_meas, curr_dist, d_range):
+
+        # If the robot is not within detectable range of the lighthouse, we cannot implement filtering
+        if curr_dist > d_range:
+            return self.X
+
+        # Compute square root of P = cholesky factor
+        SR = np.array(scipy.linalg.cholesky((self.N + self.L) * self.P))
+
+        # Regenerate X_chi with apriori X and P (sigma points)
+        mu_0 = self.X
+        mu_1, mu_4 = mu_0 + SR[0,:].reshape(3,1), mu_0 - SR[0,:].reshape(3,1)
+        mu_2, mu_5 = mu_0 + SR[1,:].reshape(3,1), mu_0 - SR[1,:].reshape(3,1)
+        mu_3, mu_6 = mu_0 + SR[2,:].reshape(3,1), mu_0 - SR[2,:].reshape(3,1)
+        X_chi = np.concatenate((mu_0, mu_1, mu_2, mu_3, mu_4, mu_5, mu_6), axis=1)
+
+        # Get measurements based on states
+        self.Z = np.zeros((2,1))
+        for i in range(2 * self.N + 1):
+            if i == 0:
+                self.Z += (self.L/(self.N+self.L)) * self.h(X_chi[:,i].reshape(3,1))
+            else:
+                self.Z += (0.5 * 1/(self.N+self.L)) * self.h(X_chi[:,i].reshape(3,1))
+        
+        # Predict apriori measurement covariance
+        self.S = np.zeros((2,2))
+        for i in range(2 * self.N + 1):
+            hX = self.h(X_chi[:,i].reshape(3,1))
+            if i == 0:
+                self.S += (self.L/(self.N+self.L)) * np.outer(hX-self.Z, hX-self.Z)
+            else:
+                self.S += (0.5 * 1/(self.N+self.L)) * np.outer(hX-self.Z, hX-self.Z)
+        self.S += self.R
+
+        # Compute cross covariance
+        P_cross = np.zeros((self.N, 2))
+        for i in range(2 * self.N + 1):
+            gX = self.g(X_chi[:,i].reshape(3,1), self.w, self.f)
+            hX = self.h(X_chi[:,i].reshape(3,1))
+            if i == 0:
+                P_cross += (self.L/(self.N+self.L)) * np.outer(gX-self.X, hX-self.Z)
+            else:
+                P_cross += (0.5 * 1/(self.N+self.L)) * np.outer(gX-self.X, hX-self.Z)
+
+        # Compute Kalman Gain
+        self.W = P_cross @ np.linalg.inv(self.S)
+
+        # Update to aposteriori state and covariance
+        self.X += self.W @ (Z_meas-self.Z)
+        self.X[2][0] = range_2_pi(self.X[2][0])
+        self.P -= self.W @ self.S @ self.W.T
+
+        return self.X
+
+
+    # Compute transformed X
+    def g(self, X, w, f):
+        return X + np.array([np.cos(X[2][0] + f*w*self.dt), -np.sin(X[2][0] + f*w*self.dt), f*w*self.dt]).reshape(3,1)
+
+    # Compute measurement Z
+    def h(self, X):
+        
+        # Convert pixels to grid coordinates
+        x_CN, y_CN = pixel_2_grid(self.x_S, self.y_S)
+        x_pos, y_pos = pixel_2_grid(X[0][0], X[1][0])
+
+        # Compute Angle measurement
+        Z11, Z12 = range_2_pi(np.arctan2(y_CN-y_pos, x_CN-x_pos)), range_2_pi(X[2][0])
+        Z1 = Z11 - Z12
+
+        # Compute distance measurement
+        Z2 = np.sqrt((self.x_S-X[0][0])**2 + (self.y_S-X[1][0])**2)
+
+        # Combine measurements
+        Z = np.array([Z1, Z2]).reshape(2,1)
+
+        return Z
+
+
+
