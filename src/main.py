@@ -63,8 +63,8 @@ def PID_move():
     global sim_time, c
 
     # Update PID gains
-    PID_ctrl.compute_dist_dir(draw_arr, bot.pos, bot.angle)
-    E, e_rot = PID_ctrl.update_gains(speed)
+    LL_ctrl.compute_dist_dir(draw_arr, bot.pos, bot.angle)
+    E, e_rot = LL_ctrl.update_gains_LL(speed)
     
     # Rotate the bot CW or CCW depending on cross-product result and then incrementally move forward
     if e_rot > 0:
@@ -79,6 +79,8 @@ def PID_move():
     l2.config(text='Use Type: ' + str(e_rot))
     root.after(int(1000/speed), PID_move)
 
+
+
 ##################################
 # Extended Kalman Filter Function
 ##################################
@@ -90,7 +92,7 @@ def EKF_move():
     # Update PID gains
     A = range_2_pi(bot.angle)
     PID_ctrl.compute_dist_dir(draw_arr, bot.pos, A)
-    E, e_rot = PID_ctrl.update_gains(speed)
+    E, e_rot = PID_ctrl.update_gains_PID(speed)
 
     # Rotate the bot CW or CCW depending on cross-product result and then incrementally move forward (with error)
     if e_rot > 0:
@@ -144,7 +146,7 @@ def SLAM_move():
     # Update PID gains
     A = range_2_pi(bot.angle)
     PID_ctrl.compute_dist_dir(draw_arr, bot.pos, A)
-    E, e_rot = PID_ctrl.update_gains(speed)
+    E, e_rot = PID_ctrl.update_gains_PID(speed)
 
     # Rotate the bot CW or CCW depending on cross-product result and then incrementally move forward (with error)
     if e_rot > 0:
@@ -217,9 +219,13 @@ if __name__ == '__main__':
 
     
     ### Setup PID Control ###
-    kp, ki, kd = 5, 0.00001, 0.5
-    # kp, ki, kd = 4, 0.000001, 1.1
-    PID_ctrl = PID(kp=kp, ki=ki, kd=kd, f_dist=0.1)
+    # kp, ki, kd = 5, 0.00001, 0.5
+    # # kp, ki, kd = 4, 0.000001, 1.1
+    # PID_ctrl = PID(kp=kp, ki=ki, kd=kd, f_dist=0.1)
+
+    ### Setup Lead-Lag Control ###
+    kp, ki, kd = 5, 0.001, 0.0008
+    LL_ctrl = PID(kp=kp, ki=ki, kd=kd, f_dist=0.1)
 
     ### Setup Extended Kalman Filter ###
 
@@ -272,7 +278,7 @@ if __name__ == '__main__':
     ekf = UKF(X_0=X_k, dt=0.04, Q=Q_k, R=R_k, P_0=P_k, x_S=x1, y_S=y1)          # Initialization of extended kalman filter
 
     ### Canvas Buttons and Labels ###
-    b = Button(root, text='Run', command=EKF_move, font=('Helvetica',16), fg='black')
+    b = Button(root, text='Run', command=PID_move, font=('Helvetica',16), fg='black')
     b.place(x=58, y=10)
     l = Label(root, text='Simulation Time (s): 0', fg='black')
     l.place(x=58, y=60)

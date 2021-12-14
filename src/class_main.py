@@ -378,6 +378,10 @@ class PID:
         # E_rot determines which direction to rotate, E is the PID angular velocity
         self.e_rot, self.E = None, None
 
+        # Extra parameters for lead-lag controller
+        self.time_list = []
+        self.exp_list = []
+        self.err_list = []
 
     def compute_dist_dir(self, path_arr, bot_pos, bot_angle):
 
@@ -401,8 +405,7 @@ class PID:
         # Compute cross-product of two vectors to determine whether the bot should rotate CW or CCW to follow path
         self.e_rot = np.cross(bot_line_pos + [0], bot_dir_vec + [0])[2]
 
-
-    def update_gains(self, speed):
+    def update_gains_PID(self, speed):
 
         # Determine angular velocity
         self.E = self.kp * self.P + self.ki * self.I + self.kd * self.D
@@ -411,6 +414,25 @@ class PID:
         self.I += self.P * (1/speed)
         self.D = (self.P - self.LE)/(1/speed)
         self.LE = self.P
+
+        # Return results
+        return self.E, self.e_rot
+
+    def update_gains_LL(self, speed):
+    
+        # Determine angular velocity
+        self.E = self.kp * (self.P + self.I)
+
+        # Correct terms
+        if self.time_list == []:
+            self.time_list = [(1/speed)] + self.time_list
+        else:
+            self.time_list = [self.time_list[0] + 1/speed] + self.time_list
+        self.exp_list = (self.ki - self.kd) * np.exp(-self.kd * np.array(self.time_list))
+        self.err_list += [self.E]
+        
+        # Find sum
+        self.I = np.sum(self.exp_list * np.array(self.err_list)) * (1/speed)
 
         # Return results
         return self.E, self.e_rot
