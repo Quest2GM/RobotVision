@@ -9,7 +9,7 @@ As a side note, I adopt Prof. Gabriele D'Eleuterio's math symbol scheme for clar
 ## How do I move?
 
 ### Defining the Car's model
-The vehicle that we will work with has three notable manuevers; rotate clockwise, rotate counter-clockwise and drive straight. Thus, the most logical control input <img src="https://latex.codecogs.com/gif.latex?u=\begin{bmatrix}%20v%20\\%20\omega%20\end{bmatrix}" />  is a vector with velocity, <img src="https://latex.codecogs.com/gif.latex?v" />, and angular velocity, <img src="https://latex.codecogs.com/gif.latex?\omega" />. For simplicity, we will traverse with constant velocity (25 pixels/sec = 1 unit/sec).
+The vehicle that we will work with has three notable manuevers; rotate clockwise, rotate counter-clockwise and drive straight. Thus, the most logical control input <img src="https://latex.codecogs.com/gif.latex?u=\begin{bmatrix}%20v%20&%20\omega%20\end{bmatrix}" />  is a vector with velocity, <img src="https://latex.codecogs.com/gif.latex?v" />, and angular velocity, <img src="https://latex.codecogs.com/gif.latex?\omega" />. For simplicity, we will traverse with constant velocity (25 pixels/sec = 1 unit/sec).
 
 The trick to commanding a simulated robot to achieve a rotation
 
