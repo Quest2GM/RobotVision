@@ -9,11 +9,16 @@ As a side note, I adopt Prof. Gabriele D'Eleuterio's math symbol scheme for clar
 ## How do I move?
 
 ### Defining the Car's model
-The vehicle that we will work with has three notable manuevers; rotate clockwise, rotate counter-clockwise and drive straight. Thus, the most logical control input <img src="https://latex.codecogs.com/gif.latex?u=\begin{bmatrix}%20v%20&%20\omega%20\end{bmatrix}" />  is a vector with velocity, <img src="https://latex.codecogs.com/gif.latex?v" />, and angular velocity, <img src="https://latex.codecogs.com/gif.latex?\omega" />. For simplicity, we will traverse with constant velocity (25 pixels/sec = 1 unit/sec).
+The vehicle that we will work with has three notable manuevers; rotate clockwise, rotate counter-clockwise and drive straight. Thus, the most logical control input <img src="https://latex.codecogs.com/gif.latex?u=\begin{bmatrix}%20v%20&%20\omega%20\end{bmatrix}" />  is a vector with velocity, <img src="https://latex.codecogs.com/gif.latex?v" />, and angular velocity, <img src="\textbf{C}" />. For simplicity, we will traverse with constant velocity (25 pixels/sec = 1 unit/sec).
 
-The trick to commanding a simulated robot to achieve a rotation
+The trick to achieving angular control when the car's foreign metric system is in pixels is in the rotation matrix. The Tkinter grid is positioned such that positive is to the right and down, whereas the conventional form is to the right and up. 
 
-The first thing I wanted to do was build a Dubin's path calculator. The idea behind Dubin's path is very simple; what is the shortest distance path bewteen any two points on a 2D grid, given a minimum turning radius.
+<img src="https://latex.codecogs.com/gif.latex?\textbf{C}_{cw}=\begin{bmatrix}%20\cos{\theta}%20&%20-%20%20\sin{\theta}\\%20%20\sin{\theta}%20&%20\cos{\theta}%20\end{bmatrix}" /><img src="https://latex.codecogs.com/gif.latex?\textbf{C}_{cw}=\begin{bmatrix}%20\cos{\theta}%20&%20-%20%20\sin{\theta}\\%20%20\sin{\theta}%20&%20\cos{\theta}%20\end{bmatrix}" />
+
+
+### Dubin's Path Calculator
+
+The first thing I wanted to do was build a Dubin's path calculator. The idea behind Dubin's path is very simple; what is the shortest distance path bewteen any two points on a 2D grid, given a minimum turning radius. 
 
 ## PID Control
 ![](images/pid_ctrl_demo.gif)
