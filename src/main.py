@@ -64,7 +64,7 @@ def PID_move():
 
     # Update PID gains
     LL_ctrl.compute_dist_dir(draw_arr, bot.pos, bot.angle)
-    E, e_rot = LL_ctrl.update_gains_LL(speed)
+    E, e_rot = LL_ctrl.update_gains_PID(speed)
     
     # Rotate the bot CW or CCW depending on cross-product result and then incrementally move forward
     if e_rot > 0:
@@ -219,28 +219,28 @@ if __name__ == '__main__':
 
     
     ### Setup PID Control ###
-    # kp, ki, kd = 5, 0.00001, 0.5
-    # # kp, ki, kd = 4, 0.000001, 1.1
-    # PID_ctrl = PID(kp=kp, ki=ki, kd=kd, f_dist=0.1)
+    kp, ki, kd = 5, 0.00001, 0.5
+    # kp, ki, kd = 4, 0.000001, 1.1
+    LL_ctrl = PID(kp=kp, ki=ki, kd=kd, f_dist=0.1)
 
     ### Setup Lead-Lag Control ###
-    kp, ki, kd = 5, 0.001, 0.0008
-    LL_ctrl = PID(kp=kp, ki=ki, kd=kd, f_dist=0.1)
+    # kp, ki, kd = 5, 0.001, 0.0008
+    # LL_ctrl = PID(kp=kp, ki=ki, kd=kd, f_dist=0.1)
 
     ### Setup Extended Kalman Filter ###
 
-    # # Create lighthouse and the detection range circle
-    # r, detect_range = 10, 200
-    # x1, y1 = grid_2_pixel(10, 1)
-    # c.create_oval(x1-detect_range, y1-detect_range, x1+detect_range, y1+detect_range, fill='white')
-    # c.create_oval(x1-r, y1-r, x1+r, y1+r, fill='red')
+    # Create lighthouse and the detection range circle
+    r, detect_range = 10, 200
+    x1, y1 = grid_2_pixel(10, 1)
+    c.create_oval(x1-detect_range, y1-detect_range, x1+detect_range, y1+detect_range, fill='white')
+    c.create_oval(x1-r, y1-r, x1+r, y1+r, fill='red')
 
-    # # Setup Kalman variables and filter class
-    # X_k = np.array([[bot.pos[0],bot.pos[1],bot.angle]]).T                       # Initial pose
-    # perr, qerr, rerr = 100e-5, 50e-3, 10e-3                                     # Kalman filter error terms
-    # P_k, Q_k, R_k = np.eye(3) * perr, np.eye(3) * qerr, np.eye(2) * rerr        # State, Process, Measurement Covariances
-    # u_k = np.array([[1,0]]).T                                                   # Input: (velocity, angular velocity)
-    # ekf = EKF(X_0=X_k, dt=0.04, u=u_k, Q=Q_k, R=R_k, P_0=P_k, x_S=x1, y_S=y1)   # Initialization of extended kalman filter
+    # Setup Kalman variables and filter class
+    X_k = np.array([[bot.pos[0],bot.pos[1],bot.angle]]).T                       # Initial pose
+    perr, qerr, rerr = 100e-5, 50e-3, 10e-3                                     # Kalman filter error terms
+    P_k, Q_k, R_k = np.eye(3) * perr, np.eye(3) * qerr, np.eye(2) * rerr        # State, Process, Measurement Covariances
+    u_k = np.array([[1,0]]).T                                                   # Input: (velocity, angular velocity)
+    ekf = EKF(X_0=X_k, dt=0.04, u=u_k, Q=Q_k, R=R_k, P_0=P_k, x_S=x1, y_S=y1)   # Initialization of extended kalman filter
 
     ### Setup SLAM ###
     
@@ -266,19 +266,19 @@ if __name__ == '__main__':
     ### Setup Unscented Kalman Filter ###
 
     # Create lighthouse and the detection range circle
-    r, detect_range = 10, 100
-    x1, y1 = grid_2_pixel(10, 1)
-    c.create_oval(x1-detect_range, y1-detect_range, x1+detect_range, y1+detect_range, fill='white')
-    c.create_oval(x1-r, y1-r, x1+r, y1+r, fill='red')
+    # r, detect_range = 10, 100
+    # x1, y1 = grid_2_pixel(10, 1)
+    # c.create_oval(x1-detect_range, y1-detect_range, x1+detect_range, y1+detect_range, fill='white')
+    # c.create_oval(x1-r, y1-r, x1+r, y1+r, fill='red')
 
-    # Setup Kalman variables and filter class
-    X_k = np.array([[bot.pos[0],bot.pos[1],bot.angle]]).T                       # Initial pose
-    perr, qerr, rerr = 1e-5, 5e-3, 1e-3                                         # Kalman filter error terms
-    P_k, Q_k, R_k = np.eye(3) * perr, np.eye(3) * qerr, np.eye(2) * rerr        # State, Process, Measurement Covariances
-    ekf = UKF(X_0=X_k, dt=0.04, Q=Q_k, R=R_k, P_0=P_k, x_S=x1, y_S=y1)          # Initialization of extended kalman filter
+    # # Setup Kalman variables and filter class
+    # X_k = np.array([[bot.pos[0],bot.pos[1],bot.angle]]).T                       # Initial pose
+    # perr, qerr, rerr = 1e-5, 5e-3, 1e-3                                         # Kalman filter error terms
+    # P_k, Q_k, R_k = np.eye(3) * perr, np.eye(3) * qerr, np.eye(2) * rerr        # State, Process, Measurement Covariances
+    # ekf = UKF(X_0=X_k, dt=0.04, Q=Q_k, R=R_k, P_0=P_k, x_S=x1, y_S=y1)          # Initialization of extended kalman filter
 
     ### Canvas Buttons and Labels ###
-    b = Button(root, text='Run', command=PID_move, font=('Helvetica',16), fg='black')
+    b = Button(root, text='Run', command=EKF_move, font=('Helvetica',16), fg='black')
     b.place(x=58, y=10)
     l = Label(root, text='Simulation Time (s): 0', fg='black')
     l.place(x=58, y=60)

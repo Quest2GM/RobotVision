@@ -409,10 +409,11 @@ class PID:
 
         # Determine angular velocity
         self.E = self.kp * self.P + self.ki * self.I + self.kd * self.D
+        dt = 1/speed
 
         # Correct I and D terms
-        self.I += self.P * (1/speed)
-        self.D = (self.P - self.LE)/(1/speed)
+        self.I += self.P * dt
+        self.D = (self.P - self.LE)/dt
         self.LE = self.P
 
         # Return results
@@ -451,6 +452,7 @@ class EKF:
         self.dt = dt    # Time increment
         self.x_S = x_S  # Sensor X Value
         self.y_S = y_S  # Sensor Y Value
+        self.w, self.f = None, None
 
         # Initialize Matrix Variables
         self.X = X_0        # State                  [3x1]
