@@ -48,13 +48,13 @@ If we want to setup a PID controller, we need two things; a variable to control 
 There is one problem that we need to overcome - how do we know when to command the robot to turn clockwise or counterclockwise? In reality, the robot has a colour sensor on it so it can know whether to rotate right or left depending on where it detects the dark colour in its field of view. Doing this in simulation is very different since we don't actually use sensor readings. Here we make use of the cross product!
 
 <p  align="justify">
-At each iteration of our PID control loop, we find the point on the path that is the shortest distance away from the robot, and determine the vector that goes through this point and is tangent to the path. This is our 'b' vector. Then we find the vector that describes the heading of the robot, and this is our 'a' vector. To enable the use of the cross product, we add a third dimension to our vectors. If you can visualize the right hand rule, notice that computing <img  src="https://latex.codecogs.com/gif.latex?f=|\underrightarrow{a}\times\underrightarrow{b}|" > will always be negative if the robot is to the left of the path, it will be positive if it is to the right of the path, and perfectly aligned with the path if it is zero.
+At each iteration of our PID control loop, we find the point on the path that is the shortest distance away from the robot, and determine the vector that goes through this point and is tangent to the path. This is our 'b' vector. Then we find the vector that describes the heading of the robot, and this is our 'a' vector. To enable the use of the cross product, we add a third dimension to our vectors. If you can visualize the right hand rule, notice that computing <img  src="https://latex.codecogs.com/gif.latex?f=|\underrightarrow{a}\times\underrightarrow{b}|" > will always be negative if the robot is to the left of the path, positive if it is to the right of the path, and zero if it is perfectly aligned with the path.
 
 <p  align="justify">
-Now, our update equations for our robot pose can be derived as:
+The state model with state, <img src="https://latex.codecogs.com/gif.latex?\textbf{x}%20=%20\begin{bmatrix}%20x%20&%20%20y%20&%20\theta%20\end{bmatrix}"/>, for our system given our control input can be defined as the following:
 
 <p  align="center">
-<img  src="https://latex.codecogs.com/gif.latex?\textbf{x}_{k+1}%20=%20\begin{bmatrix}%20x_k%20+%20v_k\Delta%20t\cos(\theta_k+F\omega_k\Delta%20t)%20\\%20y_k%20+%20v_k\Delta%20t\sin(\theta_k+F\omega_k\Delta%20t)%20\\%20\theta_k%20+%20F\omega_k\Delta%20t%20\end{bmatrix}%20+%20\textbf{v}_k"/>
+<img  src="https://latex.codecogs.com/gif.latex?\textbf{x}_{k+1}%20=%20\begin{bmatrix}%20x_k%20+%20v_k\Delta%20t\cos(\theta_k+F\omega_k\Delta%20t)%20\\%20y_k%20+%20v_k\Delta%20t\sin(\theta_k+F\omega_k\Delta%20t)%20\\%20\theta_k%20+%20F\omega_k\Delta%20t%20\end{bmatrix}%20"/>
 
 <p  align="justify">
 We define <img src="https://latex.codecogs.com/gif.latex?F=\frac{f}{|f|}"/>, which basically is the correction factor (either +1 or -1) that identifies if the robot is moving clockwise or counterclockwise.
@@ -67,7 +67,7 @@ Implementing this in code is well known:
 	derivative = (error - last_error) / dt
 	last_error = error
 
-We can easily modify the code block to integrate using the trapezoidal rule or the midpoint rule, as opposed to the standard Riemann sum to get better approximations of the intergral (and likewise with the derivative, but using euler forward or Runge-Kutta, etc). 
+We can easily modify the code block to integrate using the trapezoidal rule or the midpoint rule, as opposed to the standard Riemann sum to get better approximations of the integral (and likewise with the derivative, but using euler forward or Runge-Kutta, etc). 
 
 <p  align="justify">
 From here, after tuning our PID gains of course, we can draw any path on the screen and the robot should be able to follow it!
@@ -75,7 +75,11 @@ From here, after tuning our PID gains of course, we can draw any path on the scr
 
 ### Lead-Lag Control
 <p  align="justify">
-I remember in class that we were taught the lead-lag controller and how it can approximate a PI or PD controller, but is much more stable since it eliminates a lot of the problems that experience with the Integral or Derivative terms. But how do we actually implement this in code? So far, I haven't found any source code online that actually allow you to implement a lead-lag controller in a way similar to the PID controller. But, while a lead-lag controller is a more compact version of the PID controller, I think I discovered why it isn't so simple to implement and I THINK I've found a way to actually implement this in code. Since a novice like myself has claimed to have discovered something in potentially well-known theoretical territory, take anything I say here with a grain of salt.
+I remember in my Control Systems class that we were taught the lead-lag controller and how it can approximate a PI or PD controller, but is much more stable since it eliminates a lot of the problems that experience with the Integral or Derivative terms. But I never really understood how to actually implement this in code. So far, I haven't found any source code online that actually allow you to implement a lead-lag controller in a way similar to the PID controller. But, while a lead-lag controller is a more compact version of the PID controller, I think I discovered why it isn't so simple to implement and I THINK I've found a way to actually implement this in code. Since a novice like myself has claimed to have discovered something in potentially well-known theoretical territory, take anything I say in this section with a grain of salt.
+
+<p  align="justify">
+Let's understand how the PID controller works at heart. It can be described in the Laplace domain as:
+
 
 ## How do I get from here to there?
 
@@ -88,26 +92,54 @@ The idea behind Dubin's path is very simple; what is the shortest distance path 
 
 ## Where am I?
 
-### Extended Kalman Filtering
+### Extended Kalman Filter (EKF)
 <p  align="justify">
-The state model, <img src="https://latex.codecogs.com/gif.latex?\textbf{x}%20=%20\begin{bmatrix}%20x%20&%20%20y%20&%20\theta%20\end{bmatrix}"/> for our system given our control input can be intuitively defined as the following:
+As defined in the PID control section, our state update equation can be given as the following, this time with a state Gaussian noise term:
 
-
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?f(\textbf{x}_k,\textbf{u}_k)%20=%20\begin{bmatrix}%20x_k%20+%20v_k\Delta%20t\cos(\theta_k+F\omega_k\Delta%20t)%20\\%20y_k%20+%20v_k\Delta%20t\sin(\theta_k+F\omega_k\Delta%20t)%20\\%20\theta_k%20+%20F\omega_k\Delta%20t%20\end{bmatrix}%20+%20\textbf{v}_k"/>
 
 <p  align="justify">
 Since we are working in 2D, we require a 2D measurement model. Luckily, our LIDAR sensor can measure relative angle and distance, leading to the following measurement model:
 
 <p  align="center">
-<img  src="https://latex.codecogs.com/gif.latex?\textbf{z}_{k+1}%20=%20\begin{bmatrix}%20\arctan\left(\frac{y_L%20-%20y_k}{x_L-x_k}\right)%20-%20\theta_k%20\\%20\sqrt{(x_L-x_k)^2%20+%20(y_L-y_k)^2}%20\end{bmatrix}%20+%20\textbf{w}_k"/>
+<img  src="https://latex.codecogs.com/gif.latex?h(\textbf{x}_k)%20=%20\begin{bmatrix}%20\arctan\left(\frac{y_L%20-%20y_k}{x_L-x_k}\right)%20-%20\theta_k%20\\%20\sqrt{(x_L-x_k)^2%20+%20(y_L-y_k)^2}%20\end{bmatrix}%20+%20\textbf{w}_k"/>
 
 <p  align="justify">
-Note that in implementation we use the atan2 function instead of arctan to account for directionality. Given this, the Jacobian matrices with respect to state space can be derived:
+where <img  src="https://latex.codecogs.com/gif.latex?(x_L,y_L)"/>  is the position of a LIDAR detectable object. Note that in implementation we use the atan2 function instead of atan to account for directionality. Given this, the Jacobian matrices with respect to state space and measurement space can be derived:
+
+<p  align="center">
+<img src="https://latex.codecogs.com/gif.latex?\textbf{A}_k%20=%20\begin{bmatrix}%201%20&%200%20&%20-v_k\Delta%20t\sin(\theta_k+F\omega_k\Delta%20t)%20%20\\%200%20&%201%20&%20v_k\Delta%20t\cos(\theta_k+F\omega_k\Delta%20t)%20\\%200%20&%200%20&%201%20\end{bmatrix}%20\hspace{0.2cm}%20\textbf{B}_k%20=%20\begin{bmatrix}%20\Delta%20t\cos(\theta_k+F\omega_k\Delta%20t)%20&%20-v_kF\Delta%20t^2\sin(\theta_k+F\omega_k\Delta%20t)%20%20\\%20\Delta%20t\sin(\theta_k+F\omega_k\Delta%20t)%20&%20v_kF\Delta%20t^2\cos(\theta_k+F\omega_k\Delta%20t)%20%20\\%200%20&%20F\Delta%20t%20\end{bmatrix}" />
+
+<p  align="center">
+<img src="https://latex.codecogs.com/gif.latex?\textbf{D}_k%20=%20\begin{bmatrix}%20\frac{y_L-y_k}{d^2}%20&%20\frac{x_k-x_L}{d^2}%20&%20-1%20%20\\%20\frac{x_k-x_L}{d}%20&%20\frac{y_k-y_L}{d}%20&%200%20\end{bmatrix}%20\hspace{0.4cm}\text{where}\hspace{0.4cm}%20d%20=%20\sqrt{(x_L-x_k)^2+(y_L-y_k)^2}" />
+
+<p  align="justify">
+Finally, given an initial state covariance, <img src="https://latex.codecogs.com/gif.latex?\textbf{P}_{k|k}"/>, process noise, <img src="https://latex.codecogs.com/gif.latex?\textbf{Q}_{k}"/>, and measurement noise, <img src="https://latex.codecogs.com/gif.latex?\textbf{R}_{k}"/>, we can apply the EKF algorithm:
+
+### Simultaneous Localization and Mapping (SLAM)
+
+<p  align="justify">
+The conversion from EKF to SLAM isn't a difficult one, so long as we are continuing to filter and not smooth. Pose graph optimization based SLAM, falling under the smoothing category, is more widely used in practice because it is more robust and less error prone to the limitations of the Kalman filter. Regardless, I decided to implement EKF based SLAM, because understanding it will help me grasp the fundamentals, and more importantly, better appreciate the need for something better.
+
+<p  align="justify">
+The biggest difference in implementation from the EKF is the fact that we need to additionally track the positions of the objects we observe. In the case of a robot exploring an unknown environment, we wouldn't know the number of objects to keep track of beforehand and so we would need to constantly update the sizes of our matrices. For simplicity, let's assume that we know the number of objects that require tracking in our map. We need to keep track of 2N additional things - the x and y coordinates for each of our N objects. Our conversion matrix from our EKF state space to this higher order space can be defined as the following:
+
+<p  align="center">
+<img src="https://latex.codecogs.com/gif.latex?\textbf{F}_x%20=%20\overbrace{\begin{bmatrix}%201%20&%200%20&%200%20&%200%20&%20\dots%20&%200\\%200%20&%201%20&%200%20&%200%20&%20\dots%20&%200\\%200%20&%200%20&%201%20&%200%20&%20\dots%20&%200%20\end{bmatrix}}^\text{2N+3}" />
+
+<p  align="justify">
+Next, we need some way of defining <img src="https://latex.codecogs.com/gif.latex?\textbf{D}_{k}"/>, but only to allow updates for objects in our current field of view. As such, we define the following matrices:
+
+<p  align="center">
+<img src="https://latex.codecogs.com/gif.latex?\textbf{D}_{low}%20=%20\begin{bmatrix}%20\frac{y_L-y_k}{d^2}%20&%20\frac{x_k-x_L}{d^2}%20&%20-1%20&%20%20\frac{y_k-y_L}{d^2}%20&%20\frac{x_L-x_k}{d^2}%20\\%20\frac{x_k-x_L}{d}%20&%20\frac{y_k-y_L}{d}%20&%200%20&%20\frac{x_L-x_k}{d}%20&%20\frac{y_L-y_k}{d}%20\end{bmatrix}%20\hspace{1cm}%20\textbf{F}_D%20=%20\overbrace{\begin{bmatrix}%201%20&%200%20&%200%20&%200%20&%20\dots%20&%200%20&%200%20&%20\dots%20&%200%20\\%200%20&%201%20&%200%20&%200%20&%20\dots%20&%200%20&%200%20&%20\dots%20&%200%20\\%200%20&%200%20&%201%20&%200%20&%20\dots%20&%200%20&%200%20&%20\dots%20&%200%20\\%200%20&%200%20&%200%20&%200%20&%20\dots%20&%201%20&%200%20&%20\dots%20&%200%20\\%200%20&%200%20&%200%20&%200%20&%20\dots%20&%200%20&%201%20&%20\dots%20&%200%20\end{bmatrix}}^\text{2N+3}" />
+
+This is enough to implement EKF-SLAM:
 
 
-### Simulatenous Localization and Mapping (SLAM)
-
-### Unscented Kalman Filtering
-Since we have a highly non-linear model, the EKF tends to linearize in unwanted places and in general, the Jacobian matrix tends to under approximate the true state of the robot. As such, it only makes sense to explore the UKF since it eliminates the need for Jacobians and is almost always used in practice.
+### Unscented Kalman Filter (UKF)
+<p  align="justify">
+Since we have a highly non-linear model, the EKF tends to linearize in unwanted places and in general, the Jacobian matrix tends to under approximate the true state of the robot. As such, it only makes sense to explore the UKF since it eliminates the need for Jacobians and is almost always beats the EKF.
   
   
 ## What's Next?
