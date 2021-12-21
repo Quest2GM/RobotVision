@@ -72,22 +72,26 @@ We can easily modify the code block to integrate using the trapezoidal rule or t
 <p  align="justify">
 From here, after tuning our PID gains of course, we can draw any path on the screen and the robot should be able to follow it!
 
-
 ### Lead-Lag Control
 <p  align="justify">
-I remember in my Control Systems class that we were taught the lead-lag controller and how it can approximate a PI or PD controller, but is much more stable since it eliminates a lot of the problems that experience with the Integral or Derivative terms. But I never really understood how to actually implement this in code. So far, I haven't found any source code online that actually allow you to implement a lead-lag controller in a way similar to the PID controller. But, while a lead-lag controller is a more compact version of the PID controller, I think I discovered why it isn't so simple to implement and I THINK I've found a way to actually implement this in code. Since a novice like myself has claimed to have discovered something in potentially well-known theoretical territory, take anything I say in this section with a grain of salt.
+I remember in my Control Systems class that we were taught the lead-lag controller and how it can approximate a PI or PD controller, but is much more stable since it eliminates a lot of the problems that experience with the Integral or Derivative terms. But I never really understood how to actually implement this in code. So far, I haven't found any source code online that actually allow you to implement a lead-lag controller in a way similar to the PID controller. But, while a lead-lag controller is a more compact version of the PID controller, I think I understand why it isn't so simple and I THINK I've found a way to actually implement this in code. Since a novice like myself has claimed to have discovered something in potentially well-known theoretical territory, take anything I say in this section with a grain of salt.
 
 <p  align="justify">
-Let's understand how the PID controller works at heart. It can be described in the Laplace domain as:
+The PID controller and lead-lag controllers can be described in the Laplace domain as:
 
 
 ## How do I get from here to there?
 
 ### Dubin's Path Calculator
 <p  align="justify">
-The idea behind Dubin's path is very simple; what is the shortest distance path between any two points on a 2D grid, given your vehicle has a minimum turning radius. Given that there are only six types of curves to consider according to Dubin, the problem really comes down to circle geometry. There are two types of curves; CSC = Curve, Straight, Curve and CCC = Curve, Curve, Curve. As such, I set out to handle this graphically in Desmos before attempting to program it. I don't really understand why, but the amount of time I spent on these Desmos visualizations is probably about half in comparison to the amount of time I spent on this entire project.
+The idea behind Dubin's path is very simple; what is the shortest distance path between any two points on a 2D grid, given your vehicle has a minimum turning radius. Given that there are only six types of curves to consider according to Dubin, the problem really comes down to circle geometry. There are two types of curves; CSC = Curve, Straight, Curve and CCC = Curve, Curve, Curve. I set out to handle this graphically in Desmos before attempting to program it. I don't really understand why, but the amount of time I spent on these Desmos visualizations is probably about half in comparison to the amount of time I spent on this entire project.
 
-[CSC Desmos](https://www.desmos.com/calculator/dqbshvxzmd), [CCC Desmos](https://www.desmos.com/calculator/xfw2mw9dti). 
+[CSC Desmos](https://www.desmos.com/calculator/dqbshvxzmd), [CCC Desmos](https://www.desmos.com/calculator/xfw2mw9dti).
+
+I implemented this in three steps:
+1. Draw all "pseudo-legal" (do not consider vehicle's initial orientation) Dubin's paths between start and end point.
+2. Eliminate illegal paths.
+3. Compute distance for all paths and identify minimum.
 
 
 ## Where am I?
@@ -109,13 +113,22 @@ Since we are working in 2D, we require a 2D measurement model. Luckily, our LIDA
 where <img  src="https://latex.codecogs.com/gif.latex?(x_L,y_L)"/>  is the position of a LIDAR detectable object. Note that in implementation we use the atan2 function instead of atan to account for directionality. Given this, the Jacobian matrices with respect to state space and measurement space can be derived:
 
 <p  align="center">
-<img src="https://latex.codecogs.com/gif.latex?\textbf{A}_k%20=%20\begin{bmatrix}%201%20&%200%20&%20-v_k\Delta%20t\sin(\theta_k+F\omega_k\Delta%20t)%20%20\\%200%20&%201%20&%20v_k\Delta%20t\cos(\theta_k+F\omega_k\Delta%20t)%20\\%200%20&%200%20&%201%20\end{bmatrix}%20\hspace{0.2cm}%20\textbf{B}_k%20=%20\begin{bmatrix}%20\Delta%20t\cos(\theta_k+F\omega_k\Delta%20t)%20&%20-v_kF\Delta%20t^2\sin(\theta_k+F\omega_k\Delta%20t)%20%20\\%20\Delta%20t\sin(\theta_k+F\omega_k\Delta%20t)%20&%20v_kF\Delta%20t^2\cos(\theta_k+F\omega_k\Delta%20t)%20%20\\%200%20&%20F\Delta%20t%20\end{bmatrix}" />
+<img src="https://latex.codecogs.com/gif.latex?\textbf{A}_k%20=%20\begin{bmatrix}%201%20&%200%20&%20-v_k\Delta%20t\sin(\theta_k+F\omega_k\Delta%20t)%20%20\\%200%20&%201%20&%20v_k\Delta%20t\cos(\theta_k+F\omega_k\Delta%20t)%20\\%200%20&%200%20&%201%20\end{bmatrix}" />
 
 <p  align="center">
 <img src="https://latex.codecogs.com/gif.latex?\textbf{D}_k%20=%20\begin{bmatrix}%20\frac{y_L-y_k}{d^2}%20&%20\frac{x_k-x_L}{d^2}%20&%20-1%20%20\\%20\frac{x_k-x_L}{d}%20&%20\frac{y_k-y_L}{d}%20&%200%20\end{bmatrix}%20\hspace{0.4cm}\text{where}\hspace{0.4cm}%20d%20=%20\sqrt{(x_L-x_k)^2+(y_L-y_k)^2}" />
 
 <p  align="justify">
 Finally, given an initial state covariance, <img src="https://latex.codecogs.com/gif.latex?\textbf{P}_{k|k}"/>, process noise, <img src="https://latex.codecogs.com/gif.latex?\textbf{Q}_{k}"/>, and measurement noise, <img src="https://latex.codecogs.com/gif.latex?\textbf{R}_{k}"/>, we can apply the EKF algorithm:
+
+
+<p  align="center">
+<iframe width="550"  height="315"  
+src="https://www.youtube.com/embed/xIxnYnVbS8k">  
+</iframe>
+
+<p  align="justify">
+In the demo, the red circle represents a LIDAR detectable station, the black circular outline represents the detectable range of the station and the cyan trace is the predicted state. When the robot is outside of the detectable range, it cannot update the state with the Kalman gain since it doesn't receive any sensor readings, and so it predicts normally with <img  src="https://latex.codecogs.com/gif.latex?f(\textbf{x}_k,\textbf{u}_k)"/> without accounting for error. Notice how, when the robot enters the detectable range, it very visibly starts correcting the state and it eventually converges quite amazingly at the end, despite large deviations caused by unaccounting for errors outside of the detectable range.
 
 ### Simultaneous Localization and Mapping (SLAM)
 
@@ -144,6 +157,7 @@ Since we have a highly non-linear model, the EKF tends to linearize in unwanted 
   
 ## What's Next?
 
+I've put the remaining items on our list on hold for now, and I may come back to completing them in the future.
 ### Progress
 -  [x] Dubin's Path Calculator
 - [ ] Rapidly Exploring Random Trees Algorithm
