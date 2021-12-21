@@ -94,7 +94,12 @@ The PID controller and lead-lag controllers can be described in the Laplace doma
 <p  align="justify">
 The idea behind Dubin's path is very simple; what is the shortest distance path between any two points on a 2D grid, given your vehicle has a minimum turning radius. Given that there are only six types of curves to consider according to Dubin, the problem really comes down to circle geometry. There are two types of curves; CSC = Curve, Straight, Curve and CCC = Curve, Curve, Curve. I set out to handle this graphically in Desmos before attempting to program it. I don't really understand why, but the amount of time I spent on these Desmos visualizations is probably about half in comparison to the amount of time I spent on this entire project.
 
-[![CSC](images/csc_thumbnail.png)](https://www.desmos.com/calculator/dqbshvxzmd) [![CCC](images/ccc_thumbnail.png)](https://www.desmos.com/calculator/xfw2mw9dti)
+<p  align="center">
+<a href="https://www.desmos.com/calculator/dqbshvxzmd">
+         <img alt="CSC" src="images/csc_thumbnail.png">
+</a> <a href="https://www.desmos.com/calculator/xfw2mw9dti">
+         <img alt="CCC" src="images/ccc_thumbnail.png">
+</a>
 
 
 I implemented this in three steps:
@@ -130,8 +135,10 @@ where <img  src="https://latex.codecogs.com/gif.latex?(x_L,y_L)"/>  is the posit
 <p  align="justify">
 Finally, given an initial state covariance, <img src="https://latex.codecogs.com/gif.latex?\textbf{P}_{k|k}"/>, process noise, <img src="https://latex.codecogs.com/gif.latex?\textbf{Q}_{k}"/>, and measurement noise, <img src="https://latex.codecogs.com/gif.latex?\textbf{R}_{k}"/>, we can apply the EKF algorithm:
 
-
-[![EKF](images/ekf_thumbnail.png)](https://www.youtube.com/embed/xIxnYnVbS8k)
+<p  align="center">
+<a href="https://www.youtube.com/embed/xIxnYnVbS8k">
+         <img alt="EKF" src="images/ekf_thumbnail.png">
+</a>
 
 
 <p  align="justify">
@@ -156,8 +163,10 @@ Next, we need some way of defining <img src="https://latex.codecogs.com/gif.late
 
 This is enough to implement EKF-SLAM:
 
-[![SLAM](images/slam_thumbnail.png)](https://www.youtube.com/embed/o0ACDtnDxwk)
-
+<p  align="center">
+<a href="https://www.youtube.com/embed/o0ACDtnDxwk">
+         <img alt="SLAM" src="images/slam_thumbnail.png">
+</a>
 
 <p  align="justify">
 In the demo, the cyan trace represent the predicted state and the blue dots represent the predicted state of the landmarks. Despite large errors towards the end caused by no measurement update, the robot is able to quickly localize and converge on the landmark location with accuracy.
