@@ -74,7 +74,6 @@ We can easily modify the code block to integrate using the trapezoidal rule or t
 <p  align="justify">
 From here, after tuning our PID gains sufficiently enough of course, we can draw any path on the screen and the robot should be able to follow it!
 
-<p  align="center">
 [![PID](images/pid_thumbnail.png)](https://www.youtube.com/embed/df07yQ8M38M)
 
 ### Lead-Lag Control
@@ -91,7 +90,6 @@ The PID controller and lead-lag controllers can be described in the Laplace doma
 <p  align="justify">
 The idea behind Dubin's path is very simple; what is the shortest distance path between any two points on a 2D grid, given your vehicle has a minimum turning radius. Given that there are only six types of curves to consider according to Dubin, the problem really comes down to circle geometry. There are two types of curves; CSC = Curve, Straight, Curve and CCC = Curve, Curve, Curve. I set out to handle this graphically in Desmos before attempting to program it. I don't really understand why, but the amount of time I spent on these Desmos visualizations is probably about half in comparison to the amount of time I spent on this entire project.
 
-<p  align="center">
 [![CSC](images/csc_thumbnail.png)](https://www.desmos.com/calculator/dqbshvxzmd) [![CCC](images/ccc_thumbnail.png)](https://www.desmos.com/calculator/xfw2mw9dti)
 
 
@@ -129,7 +127,6 @@ where <img  src="https://latex.codecogs.com/gif.latex?(x_L,y_L)"/>  is the posit
 Finally, given an initial state covariance, <img src="https://latex.codecogs.com/gif.latex?\textbf{P}_{k|k}"/>, process noise, <img src="https://latex.codecogs.com/gif.latex?\textbf{Q}_{k}"/>, and measurement noise, <img src="https://latex.codecogs.com/gif.latex?\textbf{R}_{k}"/>, we can apply the EKF algorithm:
 
 
-<p  align="center">
 [![EKF](images/ekf_thumbnail.png)](https://www.youtube.com/embed/xIxnYnVbS8k)
 
 
@@ -155,7 +152,6 @@ Next, we need some way of defining <img src="https://latex.codecogs.com/gif.late
 
 This is enough to implement EKF-SLAM:
 
-<p  align="center">
 [![SLAM](images/slam_thumbnail.png)](https://www.youtube.com/embed/o0ACDtnDxwk)
 
 
