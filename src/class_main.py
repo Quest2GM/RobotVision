@@ -552,15 +552,15 @@ class SLAM:
     def predict(self, w, f):
 
         # Find Jacobian Matrix A
-        self.A = self.Fx.T @ np.array([[1, 0, -self.dt * np.sin(tk + f*wk*self.dt)], 
-                                        [0, 1, -self.dt * np.cos(tk + f*wk*self.dt)],
+        tk = self.X[2][0]
+        self.A = self.Fx.T @ np.array([[1, 0, -self.dt * np.sin(tk + f*w*self.dt)], 
+                                        [0, 1, -self.dt * np.cos(tk + f*w*self.dt)],
                                         [0, 0, 1]]) @ self.Fx
         
         # Find covariance estimate
         self.P = self.A @ self.P @ self.A.T + self.Fx.T @ self.Q @ self.Fx
 
         # Predict State
-        tk = self.X[2][0]
         self.X += self.Fx.T @ np.array([np.cos(tk + f*w*self.dt), -np.sin(tk + f*w*self.dt), f*w*self.dt]).reshape(3,1)
         self.X[2][0] = range_2_pi(self.X[2][0])
 

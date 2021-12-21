@@ -31,14 +31,14 @@ Let's help the robot achieve control, path planning, localization and mapping.
 The vehicle has three manuevers; rotate clockwise, rotate counter-clockwise and drive straight. Thus, the most logical control input <img  src="https://latex.codecogs.com/gif.latex?u=\begin{bmatrix}%20v%20&%20\omega%20\end{bmatrix}"  /> is a vector with velocity, <img  src="https://latex.codecogs.com/gif.latex?v"  />, and angular velocity, <img  src="https://latex.codecogs.com/gif.latex?\omega"  />.
 
 <p  align="justify">
-The trick to achieving angular control when the vehicle's foreign metric system is in pixels is in the rotation matrix. The Tkinter grid is positioned such that positive is to the right and down, whereas the conventional form is to the right and up. Thus, the conversion to the pixel reference frame comes down to a vertical flip. From this, the CW and CCW 2D rotation matrices can be deduced as:
+The trick to achieving angular control when the vehicle's foreign metric system is in pixels is in the rotation matrix. The Tkinter grid is positioned such that positive is to the right and down, whereas the conventional form is to the right and up. Thus, the conversion to the pixel reference frame comes down to a vertical flip. The CW and CCW 2D rotation matrices can be deduced as:
 
 <p  align="center">
 	<img  src="https://latex.codecogs.com/gif.latex?\textbf{C}_{cw}=\begin{bmatrix}%20\cos{\theta}%20&%20-%20%20\sin{\theta}\\%20%20\sin{\theta}%20&%20\cos{\theta}%20\end{bmatrix}"/>  &nbsp; &nbsp; &nbsp;
 	<img  src="https://latex.codecogs.com/gif.latex?\textbf{C}_{ccw}=\begin{bmatrix}%20\cos{\theta}%20&%20\sin{\theta}\\%20%20-\sin{\theta}%20&%20\cos{\theta}%20\end{bmatrix}"/>
 
 <p  align="justify">
-Note that although the math to follow from here will ignore the discrepancy from the vertical flip, we must be mindful that we use the negative y-direction in all of our equations when we are actually programming this.
+These rotation matrices can be applied to each of the "six rectangles" that the robot composes of to achieve rotation! Note that although the math to follow from here will ignore the discrepancy from the vertical flip, we must be mindful that we use the negative y-direction in all of our equations when we are actually programming this.
 
 ### PID Control
 <p  align="justify">
@@ -61,16 +61,21 @@ We define <img src="https://latex.codecogs.com/gif.latex?F=\frac{f}{|f|}"/>, whi
 
 Implementing this in code is well known:
 	
+```python
 	# The PID Control Loop
 	error = kp * error + ki * integral + kd * derivative
 	integral = error * dt
 	derivative = (error - last_error) / dt
 	last_error = error
-
+```
+<p  align="justify">
 We can easily modify the code block to integrate using the trapezoidal rule or the midpoint rule, as opposed to the standard Riemann sum to get better approximations of the integral (and likewise with the derivative, but using euler forward or Runge-Kutta, etc). 
 
 <p  align="justify">
-From here, after tuning our PID gains of course, we can draw any path on the screen and the robot should be able to follow it!
+From here, after tuning our PID gains sufficiently enough of course, we can draw any path on the screen and the robot should be able to follow it!
+
+<p  align="center">
+[![PID](images/pid_thumbnail.png)](https://www.youtube.com/embed/df07yQ8M38M)
 
 ### Lead-Lag Control
 <p  align="justify">
@@ -86,10 +91,12 @@ The PID controller and lead-lag controllers can be described in the Laplace doma
 <p  align="justify">
 The idea behind Dubin's path is very simple; what is the shortest distance path between any two points on a 2D grid, given your vehicle has a minimum turning radius. Given that there are only six types of curves to consider according to Dubin, the problem really comes down to circle geometry. There are two types of curves; CSC = Curve, Straight, Curve and CCC = Curve, Curve, Curve. I set out to handle this graphically in Desmos before attempting to program it. I don't really understand why, but the amount of time I spent on these Desmos visualizations is probably about half in comparison to the amount of time I spent on this entire project.
 
-[CSC Desmos](https://www.desmos.com/calculator/dqbshvxzmd), [CCC Desmos](https://www.desmos.com/calculator/xfw2mw9dti).
+<p  align="center">
+[![CSC](images/csc_thumbnail.png)](https://www.desmos.com/calculator/dqbshvxzmd) [![CCC](images/ccc_thumbnail.png)](https://www.desmos.com/calculator/xfw2mw9dti)
+
 
 I implemented this in three steps:
-1. Draw all "pseudo-legal" (do not consider vehicle's initial orientation) Dubin's paths between start and end point.
+1. Draw all "pseudo-legal" Dubin's paths (ones do not consider vehicle's initial orientation) between start and end point.
 2. Eliminate illegal paths.
 3. Compute distance for all paths and identify minimum.
 
@@ -122,10 +129,12 @@ where <img  src="https://latex.codecogs.com/gif.latex?(x_L,y_L)"/>  is the posit
 Finally, given an initial state covariance, <img src="https://latex.codecogs.com/gif.latex?\textbf{P}_{k|k}"/>, process noise, <img src="https://latex.codecogs.com/gif.latex?\textbf{Q}_{k}"/>, and measurement noise, <img src="https://latex.codecogs.com/gif.latex?\textbf{R}_{k}"/>, we can apply the EKF algorithm:
 
 
-[![ekf_yt](images/ekf_thumbnail.png)](https://www.youtube.com/embed/xIxnYnVbS8k)
+<p  align="center">
+[![EKF](images/ekf_thumbnail.png)](https://www.youtube.com/embed/xIxnYnVbS8k)
+
 
 <p  align="justify">
-In the demo, the red circle represents a LIDAR detectable station, the black circular outline represents the detectable range of the station and the cyan trace is the predicted state. When the robot is outside of the detectable range, it cannot update the state with the Kalman gain since it doesn't receive any sensor readings, and so it predicts normally with <img  src="https://latex.codecogs.com/gif.latex?f(\textbf{x}_k,\textbf{u}_k)"/> without accounting for error. Notice how, when the robot enters the detectable range, it very visibly starts correcting the state and it eventually converges quite amazingly at the end, despite large deviations caused by unaccounting for errors outside of the detectable range.
+In the demo, the red circle represents a LIDAR detectable station, the black circular outline represents the detectable range of the station and the cyan trace is the predicted state. When the robot is outside of the detectable range, it cannot update the state with the Kalman gain since it doesn't receive any sensor readings, and so it predicts normally with <img  src="https://latex.codecogs.com/gif.latex?f(\textbf{x}_k,\textbf{u}_k)"/> without accounting for error. Notice how, when the robot enters the detectable range, it very visibly starts correcting the state and it eventually converges quite amazingly at the end, despite large deviations during traversal outside of the detectable range.
 
 ### Simultaneous Localization and Mapping (SLAM)
 
@@ -146,8 +155,16 @@ Next, we need some way of defining <img src="https://latex.codecogs.com/gif.late
 
 This is enough to implement EKF-SLAM:
 
+<p  align="center">
+[![SLAM](images/slam_thumbnail.png)](https://www.youtube.com/embed/o0ACDtnDxwk)
+
+
+<p  align="justify">
+In the demo, the cyan trace represent the predicted state and the blue dots represent the predicted state of the landmarks. Despite large errors towards the end caused by no measurement update, the robot is able to quickly localize and converge on the landmark location with accuracy.
+
 
 ### Unscented Kalman Filter (UKF)
+
 <p  align="justify">
 Since we have a highly non-linear model, the EKF tends to linearize in unwanted places and in general, the Jacobian matrix tends to under approximate the true state of the robot. As such, it only makes sense to explore the UKF since it eliminates the need for Jacobians and is almost always beats the EKF.
   
@@ -155,6 +172,7 @@ Since we have a highly non-linear model, the EKF tends to linearize in unwanted 
 ## What's Next?
 
 I've put the remaining items on our list on hold for now, and I may come back to completing them in the future.
+
 ### Progress
 -  [x] Dubin's Path Calculator
 - [ ] Rapidly Exploring Random Trees Algorithm
@@ -163,3 +181,8 @@ I've put the remaining items on our list on hold for now, and I may come back to
 -  [x] Kalman Filtering (Extended, Unscented)
 - [ ] Particle Filtering
 -  [x] SLAM
+
+## Acknowledgements
+- Professor Gabriele D'Eleuterio: ROB301 lectures and primers
+- Professor Cyrill Stachniss: YouTube series on Kalman Filtering and SLAM
+- Professor Angela Shoellig: ROB310 lectures and class demos
