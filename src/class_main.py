@@ -464,25 +464,20 @@ class EKF:
         self.S = None       # Measurement Covariance [2x2]
         self.W = None       # Kalman Gain            [3x1]
         self.A = None       # 'A' Jacobian           [3x3]
-        self.B = None       # 'B' Jacobian           [3x2]
         self.D = None       # 'D' Jacobian           [2x3]
 
 
     def predict(self, w, f):
-        
+
         # Determine A, B, D
-        self.A, self.B, self.D = self.update_ABD(self.X[0][0], self.X[1][0], self.X[2][0], w, f)
+        self.A, self.D = self.update_ABD(self.X[0][0], self.X[1][0], self.X[2][0], w, f)
 
         # Predict apriori state covariance
         self.P = self.A @ self.P @ self.A.T + self.Q
-
-        # Add control input w (angular velocity) - from PID control algorithm
-        self.u = np.array([1,w]).reshape(2,1)
-
+        
         # Predict apriori state estimate
-        self.X = self.A @ self.X + self.B @ self.u
-        # tk = self.X[2][0]
-        # self.X += np.array([np.cos(tk + f*w*self.dt), -np.sin(tk + f*w*self.dt), f*w*self.dt]).reshape(3,1)
+        tk = self.X[2][0]
+        self.X += np.array([np.cos(tk + f*w*self.dt), -np.sin(tk + f*w*self.dt), f*w*self.dt]).reshape(3,1)
         self.X[2][0] = range_2_pi(self.X[2][0])
 
     def update(self, Z_meas, curr_dist, d_range):
@@ -517,18 +512,14 @@ class EKF:
     def update_ABD(self, xk, yk, tk, wk, f):
 
         # A, B, D Jacobian matrix calculators - see Github for derivation
-        Ak = np.array([[1, 0, -f*self.dt * np.sin(tk + f*wk*self.dt)], 
-                       [0, 1, -f*self.dt * np.cos(tk + f*wk*self.dt)],
+        Ak = np.array([[1, 0, -self.dt * np.sin(tk + f*wk*self.dt)], 
+                       [0, 1, -self.dt * np.cos(tk + f*wk*self.dt)],
                        [0, 0, 1]])
-        Bk = np.array([[np.cos(tk + f*wk*self.dt), -f*self.dt * np.sin(tk + f*wk*self.dt)],
-                       [-np.sin(tk + f*wk*self.dt), -f*self.dt * np.cos(tk + f*wk*self.dt)],
-                       [0, f*self.dt]])
-
         d = np.sqrt((self.x_S-xk)**2 + (self.y_S-yk)**2)
         Dk = np.array([[(self.y_S-yk)/(d**2), (xk-self.x_S)/(d**2), -1],
                        [(xk-self.x_S)/d, (yk-self.y_S)/d, 0]])
         
-        return Ak, Bk, Dk
+        return Ak, Dk
 
 
 #####################
@@ -561,9 +552,9 @@ class SLAM:
     def predict(self, w, f):
 
         # Find Jacobian Matrix A
-        self.A = self.Fx.T @ np.array([[1, 0, -f*self.dt * np.sin(self.X[2][0] + f*w*self.dt)], 
-                                       [0, 1, -f*self.dt * np.cos(self.X[2][0] + f*w*self.dt)],
-                                       [0, 0, 1]]) @ self.Fx
+        self.A = self.Fx.T @ np.array([[1, 0, -self.dt * np.sin(tk + f*wk*self.dt)], 
+                                        [0, 1, -self.dt * np.cos(tk + f*wk*self.dt)],
+                                        [0, 0, 1]]) @ self.Fx
         
         # Find covariance estimate
         self.P = self.A @ self.P @ self.A.T + self.Fx.T @ self.Q @ self.Fx
