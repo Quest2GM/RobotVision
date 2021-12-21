@@ -74,10 +74,11 @@ We can easily modify the code block to integrate using the trapezoidal rule or t
 <p  align="justify">
 From here, after tuning our PID gains sufficiently enough of course, we can draw any path on the screen and the robot should be able to follow it!
 
-<center>
+<p  align="center">
+<a href="https://www.youtube.com/embed/df07yQ8M38M">
+         <img alt="PID" src="images/pid_thumbnail.png">
+</a>
 
-[![PID](images/pid_thumbnail.png)](https://www.youtube.com/embed/df07yQ8M38M)
-</center>
 
 ### Lead-Lag Control
 <p  align="justify">
