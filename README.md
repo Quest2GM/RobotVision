@@ -62,11 +62,11 @@ We define <img src="https://latex.codecogs.com/gif.latex?F=\frac{f}{|f|}"/>, whi
 Implementing this in code is well known:
 	
 ```python
-	# The PID Control Loop
-	error = kp * error + ki * integral + kd * derivative
-	integral = error * dt
-	derivative = (error - last_error) / dt
-	last_error = error
+# The PID Control Loop
+error = kp * error + ki * integral + kd * derivative
+integral = error * dt
+derivative = (error - last_error) / dt
+last_error = error
 ```
 <p  align="justify">
 We can easily modify the code block to integrate using the trapezoidal rule or the midpoint rule, as opposed to the standard Riemann sum to get better approximations of the integral (and likewise with the derivative, but using euler forward or Runge-Kutta, etc). 
