@@ -101,7 +101,12 @@ The <img  src="https://latex.codecogs.com/gif.latex?\frac{k_I}{s}E(s)"/> term me
 <p  align="center">
 <img  src="https://latex.codecogs.com/gif.latex?f(t)%20*%20g(t)%20=%20\int_0^t%20f(\tau)g(t-\tau)%20d\tau%20\Rightarrow%20\mathcal{L}\{f(t)*g(t)\}%20=%20F(s)G(s)=Y(s)" />
 
-In the case of our PID integral term, lets set <img  src="https://latex.codecogs.com/gif.latex?F(s)=E(s)"/> and <img  src="https://latex.codecogs.com/gif.latex?G(s)=\frac{1}{s}"/>. We also know that <img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}\{E(s)\}=f(t)=e(t)"/> and <img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}{\frac{1}{s}}=g(t)=g(t-\tau)=1"/>. This leads to the following equation for our output:
+In the case of our PID integral term, lets set <img  src="https://latex.codecogs.com/gif.latex?F(s)=E(s)"/> and <img  src="https://latex.codecogs.com/gif.latex?G(s)=\frac{1}{s}"/>. We also know that:
+
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}\{E(s)\}=f(t)=e(t)"/> <img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}{\frac{1}{s}}=g(t)=g(t-\tau)=1"/>. 
+ 
+This leads to the following equation for our output:
 
 <p  align="center">
 <img  src="https://latex.codecogs.com/gif.latex?y(t)=f(t)%20*%20g(t)%20=%20\int_0^t%20e(\tau)%20d\tau%20\approx%20\sum_{t}e_t\Delta%20t" />
@@ -115,7 +120,17 @@ Let's try to apply the same idea to our lead lag controller, which can be descri
 <p  align="center">
 <img  src="https://latex.codecogs.com/gif.latex?U(s)%20=%20E(s)%20\frac{K(s+a)}{s+b}%20=%20E(s)%20\left(\frac{K(a-b)}{s+b}%20+%20K\right)" />
 
-This time, the <img  src="https://latex.codecogs.com/gif.latex?KE(s)"/> term is our proportional controller, and <img  src="https://latex.codecogs.com/gif.latex?E(s)%20\frac{K(a-b)}{s+b}" /> becomes our integral controller. Now, <img  src="https://latex.codecogs.com/gif.latex?F(s)=E(s)"/> and <img  src="https://latex.codecogs.com/gif.latex?G(s)=\frac{K(a-b)}{s+b}"/>, and hence, <img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}\{E(s)\}=f(t)=e(t)"/> and <img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}{\frac{K(a-b)}{s+b}}=g(t)=K(a-b)\exp(-bt)"/> where <img  src="https://latex.codecogs.com/gif.latex?t>0"/>. This leads to the following equation for our output:
+This time, the <img  src="https://latex.codecogs.com/gif.latex?KE(s)"/> term is our proportional controller, and <img  src="https://latex.codecogs.com/gif.latex?E(s)%20\frac{K(a-b)}{s+b}" /> becomes our integral controller. Now, 
+
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?F(s)=E(s)"/> <img  src="https://latex.codecogs.com/gif.latex?G(s)=\frac{K(a-b)}{s+b}"/>
+
+and hence, 
+
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}\{E(s)\}=f(t)=e(t)"/> and <img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}{\frac{K(a-b)}{s+b}}=g(t)=K(a-b)\exp(-bt)"/> 
+
+where <img  src="https://latex.codecogs.com/gif.latex?t>0"/>. This leads to the following equation for our output:
 
 <p  align="center">
 <img  src="https://latex.codecogs.com/gif.latex?y(t)=f(t)%20*%20g(t)%20=%20\int_0^t%20e(\tau)K(a-b)\exp(-b(t-\tau))%20d\tau"  />
