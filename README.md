@@ -104,7 +104,10 @@ The <img  src="https://latex.codecogs.com/gif.latex?\frac{k_I}{s}E(s)"/> term me
 In the case of our PID integral term, lets set <img  src="https://latex.codecogs.com/gif.latex?F(s)=E(s)"/> and <img  src="https://latex.codecogs.com/gif.latex?G(s)=\frac{1}{s}"/>. We also know that:
 
 <p  align="center">
-<img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}\{E(s)\}=f(t)=e(t)"/> <img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}{\frac{1}{s}}=g(t)=g(t-\tau)=1"/>. 
+<img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}\{E(s)\}=f(t)=e(t)"/>
+
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}{\frac{1}{s}}=g(t)=g(t-\tau)=1"/>. 
  
 This leads to the following equation for our output:
 
@@ -123,12 +126,18 @@ Let's try to apply the same idea to our lead lag controller, which can be descri
 This time, the <img  src="https://latex.codecogs.com/gif.latex?KE(s)"/> term is our proportional controller, and <img  src="https://latex.codecogs.com/gif.latex?E(s)%20\frac{K(a-b)}{s+b}" /> becomes our integral controller. Now, 
 
 <p  align="center">
-<img  src="https://latex.codecogs.com/gif.latex?F(s)=E(s)"/> <img  src="https://latex.codecogs.com/gif.latex?G(s)=\frac{K(a-b)}{s+b}"/>
-
-and hence, 
+<img  src="https://latex.codecogs.com/gif.latex?F(s)=E(s)"/>
 
 <p  align="center">
-<img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}\{E(s)\}=f(t)=e(t)"/> and <img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}{\frac{K(a-b)}{s+b}}=g(t)=K(a-b)\exp(-bt)"/> 
+<img  src="https://latex.codecogs.com/gif.latex?G(s)=\frac{K(a-b)}{s+b}"/>
+
+and, 
+
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}\{E(s)\}=f(t)=e(t)"/>
+
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}{\frac{K(a-b)}{s+b}}=g(t)=K(a-b)\exp(-bt)"/> 
 
 where <img  src="https://latex.codecogs.com/gif.latex?t>0"/>. This leads to the following equation for our output:
 
