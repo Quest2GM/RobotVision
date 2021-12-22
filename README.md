@@ -14,6 +14,7 @@ As a side note, I adopt Prof. Gabriele D'Eleuterio's math symbol scheme for cons
 <p  align="justify">
 I am a robot made of six rectangles; one body, one head and four wheels. This is what I look like.
 
+<p  align="center">
 ![Bot](images/bot.png)
 
 <p  align="justify">
@@ -49,6 +50,7 @@ If we want to setup a PID controller, we need two things; a variable to control 
 <p  align="justify">
 There is one problem that we need to overcome - how do we know when to command the robot to turn clockwise or counterclockwise? In reality, the robot has a colour sensor on it so it can know whether to rotate right or left depending on where it detects the dark colour in its field of view. Doing this in simulation is very different since we don't actually use sensor readings. Here we make use of the cross product!
 
+<p  align="center">
 ![PID_cross_prod](images/pid_cross_product.png)
 
 <p  align="justify">
@@ -102,7 +104,7 @@ The <img  src="https://latex.codecogs.com/gif.latex?\frac{k_I}{s}E(s)"/> term me
 In the case of our PID integral term, lets set <img  src="https://latex.codecogs.com/gif.latex?F(s)=E(s)"/> and <img  src="https://latex.codecogs.com/gif.latex?G(s)=\frac{1}{s}"/>. We also know that <img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}\{E(s)\}=f(t)=e(t)"/> and <img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}{\frac{1}{s}}=g(t)=g(t-\tau)=1"/>. This leads to the following equation for our output:
 
 <p  align="center">
-<img  src="https://latex.codecogs.com/gif.latex?y(t)=f(t)%20*%20g(t)%20=%20\int_0^t%20e(\tau)%20d\tau \approx \sum_{t}e_t\Delta t" />
+<img  src="https://latex.codecogs.com/gif.latex?y(t)=f(t)%20*%20g(t)%20=%20\int_0^t%20e(\tau)%20d\tau%20\approx%20\sum_{t}e_t\Delta%20t" />
 
 <p  align="justify">
 Thus, all we need to do for our integral term is sum up the error over all time. As you may have noticed from the PID code block earlier, this is precisely why we continue to add the current integral term onto our previous integral term.
@@ -118,7 +120,7 @@ This time, the <img  src="https://latex.codecogs.com/gif.latex?KE(s)"/> term is 
 
 <p  align="center">
 <img  src="https://latex.codecogs.com/gif.latex?y(t)=f(t)%20*%20g(t)%20=%20\int_0^t%20e(\tau)K(a-b)\exp(-b(t-\tau))%20d\tau"  />
-<img  src="https://latex.codecogs.com/gif.latex?\approx K(a-b)\sum_{t}e_t\exp(-b(t-\tau))\Delta t"  />
+<img  src="https://latex.codecogs.com/gif.latex?\approx%20K(a-b)\sum_{t}e_t\exp(-b(t-\tau))\Delta%20t"  />
 
 <p  align="justify">
 But, as you may have noticed, there's a small problem. Because we are multiplying two functions now and we are also time shifting g(t), the past multiplication terms will also change! This wasn't a problem earlier because in the PID case we had g(t) = g(t-tau) = 1 and we didn't have to consider this. Now, instead of adding an integral term continuously, we need to keep a continuous history of all errors and integral term calculations. Now, we can implement this in code:
@@ -190,6 +192,7 @@ where <img  src="https://latex.codecogs.com/gif.latex?(x_L,y_L)"/>  is the posit
 <p  align="justify">
 Finally, given an initial state covariance, <img src="https://latex.codecogs.com/gif.latex?\textbf{P}_{k|k}"/>, process noise, <img src="https://latex.codecogs.com/gif.latex?\textbf{Q}_{k}"/>, and measurement noise, <img src="https://latex.codecogs.com/gif.latex?\textbf{R}_{k}"/>, we can apply the EKF algorithm:
 
+<p  align="center">
 ![EKF_alg](images/ekf_alg.png)
 
 <p  align="center">
@@ -219,6 +222,7 @@ Next, we need some way of defining <img src="https://latex.codecogs.com/gif.late
 
 This is enough to implement EKF-SLAM:
 
+<p  align="center">
 ![SLAM_alg](images/slam_alg.png)
 
 <p  align="center">
@@ -237,6 +241,7 @@ Since we have a highly non-linear model, the EKF tends to linearize in unwanted 
 
 Here is the algorithm:
 
+<p  align="center">
 ![UKF_alg](images/ukf_alg.png)
 
 
