@@ -1,18 +1,20 @@
 # RobotVision
 
 <p  align="justify">
-The goal of RobotVision is to simulate control, path-planning, localization and mapping of a non-holonomic robot in a 2D world. The topics explored here are well known in robotics but I figured that this is a good opportunity for me to explore them in detail. Here, I attempt to provide the mathematical framework behind each algorithm, just enough to setup each problem in robot's reference frame, while explaining some interesting discoveries I made along the way.
+The goal of RobotVision is to simulate control, path-planning, localization and mapping of a non-holonomic robot in a 2D world. The topics explored here are well known in the robotics industry but I figured that this is a good opportunity explore them myself in more detail. Here, I attempt to provide the mathematical framework behind RobotVision.
 
 <p  align="justify">
 The project was built from scratch using Python's Tkinter library. I found this the most versatile library in Python to create animations and it very much exceeded expectations.
 
 <p  align="justify">
-As a side note, I adopt Prof. Gabriele D'Eleuterio's math symbol scheme for clarity and stylistic elegance.
+As a side note, I adopt Prof. Gabriele D'Eleuterio's math symbol scheme for consistency and stylistic elegance.
 
 
 ## What am I?
 <p  align="justify">
 I am a robot made of six rectangles; one body, one head and four wheels. This is what I look like.
+
+![Bot](images/bot.png)
 
 <p  align="justify">
 I can move forward and rotate about a point that is not my centroid, but not in reverse. With these maneuvers, I can traverse the entire 2D world. But I can't do it on my own; I only understand how to follow dark coloured markers on the ground.
@@ -47,6 +49,8 @@ If we want to setup a PID controller, we need two things; a variable to control 
 <p  align="justify">
 There is one problem that we need to overcome - how do we know when to command the robot to turn clockwise or counterclockwise? In reality, the robot has a colour sensor on it so it can know whether to rotate right or left depending on where it detects the dark colour in its field of view. Doing this in simulation is very different since we don't actually use sensor readings. Here we make use of the cross product!
 
+![PID_cross_prod](images/pid_cross_product.png)
+
 <p  align="justify">
 At each iteration of our PID control loop, we find the point on the path that is the shortest distance away from the robot, and determine the vector that goes through this point and is tangent to the path. This is our 'b' vector. Then we find the vector that describes the heading of the robot, and this is our 'a' vector. To enable the use of the cross product, we add a third dimension to our vectors. If you can visualize the right hand rule, notice that computing <img  src="https://latex.codecogs.com/gif.latex?f=|\underrightarrow{a}\times\underrightarrow{b}|" > will always be negative if the robot is to the left of the path, positive if it is to the right of the path, and zero if it is perfectly aligned with the path.
 
@@ -64,7 +68,7 @@ Implementing this in code is well known:
 ```python
 # The PID Control Loop
 error = kp * error + ki * integral + kd * derivative
-integral = error * dt
+integral += error * dt
 derivative = (error - last_error) / dt
 last_error = error
 ```
@@ -79,14 +83,64 @@ From here, after tuning our PID gains sufficiently enough of course, we can draw
          <img alt="PID" src="images/pid_thumbnail.png">
 </a>
 
-
 ### Lead-Lag Control
 <p  align="justify">
 I remember in my Control Systems class that we were taught the lead-lag controller and how it can approximate a PI or PD controller, but is much more stable since it eliminates a lot of the problems that experience with the Integral or Derivative terms. But I never really understood how to actually implement this in code. So far, I haven't found any source code online that actually allow you to implement a lead-lag controller in a way similar to the PID controller. But, while a lead-lag controller is a more compact version of the PID controller, I think I understand why it isn't so simple and I THINK I've found a way to actually implement this in code. Since a novice like myself has claimed to have discovered something in potentially well-known theoretical territory, take anything I say in this section with a grain of salt.
 
 <p  align="justify">
-The PID controller and lead-lag controllers can be described in the Laplace domain as:
+The PID controller can be described in the Laplace domain as:
 
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?U(s)%20=%20E(s)%20\left(k_p%20+%20\frac{k_I}{s}%20+%20sk_D\right)"/>
+
+<p  align="justify">
+The <img  src="https://latex.codecogs.com/gif.latex?\frac{k_I}{s}E(s)"/> term means that we are integrating over the error, and this is made clear once we convert this back to the time domain using our Laplace transform tables. But let's do this in a slightly different way, using the convolution theorem. It tells us:
+
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?f(t)%20*%20g(t)%20=%20\int_0^t%20f(\tau)g(t-\tau)%20d\tau%20\Rightarrow%20\mathcal{L}\{f(t)*g(t)\}%20=%20F(s)G(s)=Y(s)" />
+
+In the case of our PID integral term, lets set <img  src="https://latex.codecogs.com/gif.latex?F(s)=E(s)"/> and <img  src="https://latex.codecogs.com/gif.latex?G(s)=\frac{1}{s}"/>. We also know that <img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}\{E(s)\}=f(t)=e(t)"/> and <img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}{\frac{1}{s}}=g(t)=g(t-\tau)=1"/>. This leads to the following equation for our output:
+
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?y(t)=f(t)%20*%20g(t)%20=%20\int_0^t%20e(\tau)%20d\tau \approx \sum_{t}e_t\Delta t" />
+
+<p  align="justify">
+Thus, all we need to do for our integral term is sum up the error over all time. As you may have noticed from the PID code block earlier, this is precisely why we continue to add the current integral term onto our previous integral term.
+
+<p  align="justify">
+Let's try to apply the same idea to our lead lag controller, which can be described by the following in the Laplace domain:
+
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?U(s)%20=%20E(s)%20\frac{K(s+a)}{s+b}%20=%20E(s)%20\left(\frac{K(a-b)}{s+b}%20+%20K\right)" />
+
+<p  align="justify">
+This time, the <img  src="https://latex.codecogs.com/gif.latex?KE(s)"/> term is our proportional controller, and <img  src="https://latex.codecogs.com/gif.latex?E(s)%20\frac{K(a-b)}{s+b}" /> becomes our integral controller. Now, <img  src="https://latex.codecogs.com/gif.latex?F(s)=E(s)"/> and <img  src="https://latex.codecogs.com/gif.latex?G(s)=\frac{K(a-b)}{s+b}"/>, and hence, <img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}\{E(s)\}=f(t)=e(t)"/> and <img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}{\frac{K(a-b)}{s+b}}=g(t)=K(a-b)\exp(-bt)"/> where <img  src="https://latex.codecogs.com/gif.latex?t>0"/>. This leads to the following equation for our output:
+
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?y(t)=f(t)%20*%20g(t)%20=%20\int_0^t%20e(\tau)K(a-b)\exp(-b(t-\tau))%20d\tau"  />
+<img  src="https://latex.codecogs.com/gif.latex?\approx K(a-b)\sum_{t}e_t\exp(-b(t-\tau))\Delta t"  />
+
+<p  align="justify">
+But, as you may have noticed, there's a small problem. Because we are multiplying two functions now and we are also time shifting g(t), the past multiplication terms will also change! This wasn't a problem earlier because in the PID case we had g(t) = g(t-tau) = 1 and we didn't have to consider this. Now, instead of adding an integral term continuously, we need to keep a continuous history of all errors and integral term calculations. Now, we can implement this in code:
+
+```python
+# The Lead Lag Control loop
+error = K * (error +  integral)
+times = [times[0] + dt] + times
+exp_list = (a-b) * np.exp(-b * times)
+err_list += [error]
+integral = np.sum(exp_list * err_list) * dt
+```
+<p  align="justify">
+A potential issue with this implementation is that our space complexity becomes infinite as t -> infinity. To solve this, since we are dealing with a decaying exponential, the leading terms in np.sum(exp_list * err_list) approach zero for large t. We could therefore just cap our array size to some finite number (can be tuned depending on how quickly the exponential decays) and it should still give us a good approximation.
+
+<p  align="center">
+<a href="https://www.youtube.com/embed/GudSzbR40U0">
+         <img alt="LL" src="images/ll_thumbnail.png">
+</a>
+
+<p  align="justify">
+More investigation into how to properly tune the gains for the lead-lag controller needs to be done.
 
 ## How do I get from here to there?
 
@@ -101,12 +155,13 @@ The idea behind Dubin's path is very simple; what is the shortest distance path 
          <img alt="CCC" src="images/ccc_thumbnail.png">
 </a>
 
-
 I implemented this in three steps:
 1. Draw all "pseudo-legal" Dubin's paths (ones do not consider vehicle's initial orientation) between start and end point.
 2. Eliminate illegal paths.
 3. Compute distance for all paths and identify minimum.
 
+### Rapidly Exploring Random Trees
+TBD
 
 ## Where am I?
 
@@ -135,11 +190,12 @@ where <img  src="https://latex.codecogs.com/gif.latex?(x_L,y_L)"/>  is the posit
 <p  align="justify">
 Finally, given an initial state covariance, <img src="https://latex.codecogs.com/gif.latex?\textbf{P}_{k|k}"/>, process noise, <img src="https://latex.codecogs.com/gif.latex?\textbf{Q}_{k}"/>, and measurement noise, <img src="https://latex.codecogs.com/gif.latex?\textbf{R}_{k}"/>, we can apply the EKF algorithm:
 
+![EKF_alg](images/ekf_alg.png)
+
 <p  align="center">
 <a href="https://www.youtube.com/embed/xIxnYnVbS8k">
          <img alt="EKF" src="images/ekf_thumbnail.png">
 </a>
-
 
 <p  align="justify">
 In the demo, the red circle represents a LIDAR detectable station, the black circular outline represents the detectable range of the station and the cyan trace is the predicted state. When the robot is outside of the detectable range, it cannot update the state with the Kalman gain since it doesn't receive any sensor readings, and so it predicts normally with <img  src="https://latex.codecogs.com/gif.latex?f(\textbf{x}_k,\textbf{u}_k)"/> without accounting for error. Notice how, when the robot enters the detectable range, it very visibly starts correcting the state and it eventually converges quite amazingly at the end, despite large deviations during traversal outside of the detectable range.
@@ -163,19 +219,32 @@ Next, we need some way of defining <img src="https://latex.codecogs.com/gif.late
 
 This is enough to implement EKF-SLAM:
 
+![SLAM_alg](images/slam_alg.png)
+
 <p  align="center">
 <a href="https://www.youtube.com/embed/o0ACDtnDxwk">
          <img alt="SLAM" src="images/slam_thumbnail.png">
 </a>
 
 <p  align="justify">
-In the demo, the cyan trace represent the predicted state and the blue dots represent the predicted state of the landmarks. Despite large errors towards the end caused by no measurement update, the robot is able to quickly localize and converge on the landmark location with accuracy.
+In the demo, the cyan trace represent the predicted state and the blue dots represent the predicted state of the landmarks. Despite large errors towards the end caused by no measurement update, the robot is able to quickly localize and converge on the landmark locations with reasonable accuracy.
 
 
 ### Unscented Kalman Filter (UKF)
 
 <p  align="justify">
 Since we have a highly non-linear model, the EKF tends to linearize in unwanted places and in general, the Jacobian matrix tends to under approximate the true state of the robot. As such, it only makes sense to explore the UKF since it eliminates the need for Jacobians and is almost always beats the EKF.
+
+Here is the algorithm:
+
+![UKF_alg](images/ukf_alg.png)
+
+
+<p  align="justify">
+There are still one or two bugs that need to be fixed with my current implementation, but I hope to have a demo out soon!
+
+### Particle Filter
+TBD
   
   
 ## What's Next?
@@ -183,13 +252,13 @@ Since we have a highly non-linear model, the EKF tends to linearize in unwanted 
 I've put the remaining items on our list on hold for now, and I may come back to completing them in the future.
 
 ### Progress
--  [x] Dubin's Path Calculator
+- [x] Dubin's Path Calculator
 - [ ] Rapidly Exploring Random Trees Algorithm
--  [x] PID Control
--  [x] Lead-Lag Control
--  [x] Kalman Filtering (Extended, Unscented)
-- [ ] Particle Filtering
--  [x] SLAM
+- [x] PID Control
+- [x] Lead-Lag Control
+- [x] Kalman Filter (Extended, Unscented)
+- [ ] Particle Filter
+- [x] SLAM
 
 ## Acknowledgements
 - Professor Gabriele D'Eleuterio: ROB301 lectures and primers
