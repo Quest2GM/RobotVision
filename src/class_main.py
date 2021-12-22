@@ -614,11 +614,15 @@ class UKF:
         
         # Initialize Scalars
         self.N = X_0.shape[0]       # Number of dimensions = dimension of state vector (=3 in our case)
-        self.L = 3 - self.N         # Supposed optimal choice for lambda (scaling parameter)
         self.dt = dt                # Time increment     
         self.x_S = x_S              # Lighthouse location X
         self.y_S = y_S              # Lighthouse location Y
-        self.f, self.w = None, None
+        self.w, self.f = None, None
+        self.alpha = 0.7
+        self.beta = 2
+        self.kappa = 2
+        self.L = (self.alpha)**2 * (self.N + self.kappa) - self.N
+        self.cov_add = 1 - self.alpha**2 + self.beta
 
         # Initialize Matrix Variables
         self.X = X_0        # State
@@ -633,8 +637,12 @@ class UKF:
     def predict(self, w, f):
 
         # Compute square root of P = cholesky factor
-        print(self.P)
-        SR = np.array(scipy.linalg.cholesky((self.N + self.L) * self.P))
+        try:
+            SR = np.array(scipy.linalg.cholesky((self.N + self.L) * self.P))
+        except scipy.linalg.LinAlgError:
+            self.P = nearestPD(self.P)
+            SR = np.array(scipy.linalg.cholesky(self.P))
+            SR = SR * np.sqrt(self.N + self.L)
 
         # Create X_chi (sigma points)
         mu_0 = self.X
@@ -642,7 +650,7 @@ class UKF:
         mu_2, mu_5 = mu_0 + SR[1,:].reshape(3,1), mu_0 - SR[1,:].reshape(3,1)
         mu_3, mu_6 = mu_0 + SR[2,:].reshape(3,1), mu_0 - SR[2,:].reshape(3,1)
         X_chi = np.concatenate((mu_0, mu_1, mu_2, mu_3, mu_4, mu_5, mu_6), axis=1)
-
+        
         # Predict apriori state
         self.X = np.zeros((3,1))
         for i in range(2 * self.N + 1):
@@ -656,14 +664,13 @@ class UKF:
         for i in range(2 * self.N + 1):
             gX = self.g(X_chi[:,i].reshape(3,1), w, f)
             if i == 0:
-                self.P += (self.L/(self.N+self.L)) * np.outer(gX-self.X, gX-self.X)
+                self.P += (self.L/(self.N+self.L) + self.cov_add) * np.outer(gX-self.X, gX-self.X)
             else:
                 self.P += (0.5 * 1/(self.N+self.L)) * np.outer(gX-self.X, gX-self.X)
         self.P += self.Q
 
-        # Track f and w
-        self.f = f
-        self.w = w
+        # Track w and f
+        self.w, self.f = w, f
 
 
     def update(self, Z_meas, curr_dist, d_range):
@@ -695,7 +702,7 @@ class UKF:
         for i in range(2 * self.N + 1):
             hX = self.h(X_chi[:,i].reshape(3,1))
             if i == 0:
-                self.S += (self.L/(self.N+self.L)) * np.outer(hX-self.Z, hX-self.Z)
+                self.S += (self.L/(self.N+self.L) + self.cov_add) * np.outer(hX-self.Z, hX-self.Z)
             else:
                 self.S += (0.5 * 1/(self.N+self.L)) * np.outer(hX-self.Z, hX-self.Z)
         self.S += self.R
@@ -706,7 +713,7 @@ class UKF:
             gX = self.g(X_chi[:,i].reshape(3,1), self.w, self.f)
             hX = self.h(X_chi[:,i].reshape(3,1))
             if i == 0:
-                P_cross += (self.L/(self.N+self.L)) * np.outer(gX-self.X, hX-self.Z)
+                P_cross += (self.L/(self.N+self.L) + self.cov_add) * np.outer(gX-self.X, hX-self.Z)
             else:
                 P_cross += (0.5 * 1/(self.N+self.L)) * np.outer(gX-self.X, hX-self.Z)
 
