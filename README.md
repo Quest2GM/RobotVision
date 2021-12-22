@@ -15,7 +15,7 @@ As a side note, I adopt Prof. Gabriele D'Eleuterio's math symbol scheme for cons
 I am a robot made of six rectangles; one body, one head and four wheels. This is what I look like.
 
 <p  align="center">
-![Bot](images/bot.png)
+<img src="images/bot.png" alt="Bot">
 
 <p  align="justify">
 I can move forward and rotate about a point that is not my centroid, but not in reverse. With these maneuvers, I can traverse the entire 2D world. But I can't do it on my own; I only understand how to follow dark coloured markers on the ground.
@@ -51,7 +51,7 @@ If we want to setup a PID controller, we need two things; a variable to control 
 There is one problem that we need to overcome - how do we know when to command the robot to turn clockwise or counterclockwise? In reality, the robot has a colour sensor on it so it can know whether to rotate right or left depending on where it detects the dark colour in its field of view. Doing this in simulation is very different since we don't actually use sensor readings. Here we make use of the cross product!
 
 <p  align="center">
-![PID_cross_prod](images/pid_cross_product.png)
+<img src="images/pid_cross_product.png" alt="PID_cross_prod">
 
 <p  align="justify">
 At each iteration of our PID control loop, we find the point on the path that is the shortest distance away from the robot, and determine the vector that goes through this point and is tangent to the path. This is our 'b' vector. Then we find the vector that describes the heading of the robot, and this is our 'a' vector. To enable the use of the cross product, we add a third dimension to our vectors. If you can visualize the right hand rule, notice that computing <img  src="https://latex.codecogs.com/gif.latex?f=|\underrightarrow{a}\times\underrightarrow{b}|" > will always be negative if the robot is to the left of the path, positive if it is to the right of the path, and zero if it is perfectly aligned with the path.
@@ -193,7 +193,7 @@ where <img  src="https://latex.codecogs.com/gif.latex?(x_L,y_L)"/>  is the posit
 Finally, given an initial state covariance, <img src="https://latex.codecogs.com/gif.latex?\textbf{P}_{k|k}"/>, process noise, <img src="https://latex.codecogs.com/gif.latex?\textbf{Q}_{k}"/>, and measurement noise, <img src="https://latex.codecogs.com/gif.latex?\textbf{R}_{k}"/>, we can apply the EKF algorithm:
 
 <p  align="center">
-![EKF_alg](images/ekf_alg.png)
+<img src="images/ekf_alg.png" alt="EKF_alg">
 
 <p  align="center">
 <a href="https://www.youtube.com/embed/xIxnYnVbS8k">
@@ -223,7 +223,7 @@ Next, we need some way of defining <img src="https://latex.codecogs.com/gif.late
 This is enough to implement EKF-SLAM:
 
 <p  align="center">
-![SLAM_alg](images/slam_alg.png)
+<img src="images/slam_alg.png" alt="SLAM_alg">
 
 <p  align="center">
 <a href="https://www.youtube.com/embed/o0ACDtnDxwk">
@@ -242,7 +242,7 @@ Since we have a highly non-linear model, the EKF tends to linearize in unwanted 
 Here is the algorithm:
 
 <p  align="center">
-![UKF_alg](images/ukf_alg.png)
+<img src="images/ukf_alg.png" alt="UKF_alg">
 
 
 <p  align="justify">
