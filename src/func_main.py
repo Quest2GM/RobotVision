@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import linalg as la
 
 # Canvas properties
 w, h = 1400, 900
@@ -25,10 +26,8 @@ def dist(x1, y1, x2, y2):
 def range_2_pi(val):
     return np.where(val > np.pi, val - 2*np.pi, val)
 
-from numpy import linalg as la
-import numpy as np
 
-
+# Finds nearest positive definite matrix for UKF algorithm
 def nearestPD(A):
     """Find the nearest positive-definite matrix to input
     A Python/Numpy port of John D'Errico's `nearestSPD` MATLAB code [1], which
@@ -51,15 +50,6 @@ def nearestPD(A):
         return A3
 
     spacing = np.spacing(la.norm(A))
-    # The above is different from [1]. It appears that MATLAB's `chol` Cholesky
-    # decomposition will accept matrixes with exactly 0-eigenvalue, whereas
-    # Numpy's will not. So where [1] uses `eps(mineig)` (where `eps` is Matlab
-    # for `np.spacing`), we use the above definition. CAVEAT: our `spacing`
-    # will be much larger than [1]'s `eps(mineig)`, since `mineig` is usually on
-    # the order of 1e-16, and `eps(1e-16)` is on the order of 1e-34, whereas
-    # `spacing` will, for Gaussian random matrixes of small dimension, be on
-    # othe order of 1e-16. In practice, both ways converge, as the unit test
-    # below suggests.
     I = np.eye(A.shape[0])
     k = 1
     while not isPD(A3):
@@ -68,7 +58,6 @@ def nearestPD(A):
         k += 1
 
     return A3
-
 
 def isPD(B):
     """Returns true when input is positive-definite, via Cholesky"""
