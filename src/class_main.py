@@ -422,19 +422,12 @@ class PID:
     def update_gains_LL(self, speed):
     
         # Determine angular velocity
-        self.E = self.kp * (self.P + self.I)
+        self.E = self.kp * (self.P + (self.ki - self.kd) * self.I)
+        dt = 1/speed
 
         # Correct terms
-        if self.time_list == []:
-            self.time_list = [(1/speed)] + self.time_list
-        else:
-            self.time_list = [self.time_list[0] + 1/speed] + self.time_list
-        self.exp_list = (self.ki - self.kd) * np.exp(-self.kd * np.array(self.time_list))
-        self.err_list += [self.E]
+        self.I = self.I * np.exp(-self.kd * dt) + self.E
         
-        # Find sum
-        self.I = np.sum(self.exp_list * np.array(self.err_list)) * (1/speed)
-
         # Return results
         return self.E, self.e_rot
 

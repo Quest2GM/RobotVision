@@ -87,11 +87,11 @@ From here, after tuning our PID gains sufficiently enough of course, we can draw
 
 ### Lead-Lag Control
 <p  align="justify">
-I remember in my Control Systems class that we were taught the lead-lag controller and how it can approximate a PI or PD controller, but is much more stable since it eliminates a lot of the problems that experience with the Integral or Derivative terms. But I never really understood how to actually implement this in code. So far, I haven't found any source code online that actually allow you to implement a lead-lag controller in a way similar to the PID controller. But, while a lead-lag controller is a more compact version of the PID controller, I think I understand why it isn't so simple and I THINK I've found a way to actually implement this in code. Since a novice like myself has claimed to have discovered something in potentially well-known theoretical territory, take anything I say in this section with a grain of salt.
+I remember in my Control Systems class that we were taught the lead-lag controller and how it can approximate a PI or PD controller, but is much more stable since it eliminates a lot of the problems that experience with the Integral or Derivative terms. But I never really understood how to actually implement this in code. So far, I haven't found any source code online that actually allow you to implement a lead-lag controller in a way similar to the PID controller - this section aims to fix that.
 
 <p  align="justify">
 The PID controller can be described in the Laplace domain as:
-
+ 
 <p  align="center">
 <img  src="https://latex.codecogs.com/gif.latex?U(s)%20=%20E(s)%20\left(k_p%20+%20\frac{k_I}{s}%20+%20sk_D\right)"/>
 
@@ -99,20 +99,19 @@ The PID controller can be described in the Laplace domain as:
 The <img  src="https://latex.codecogs.com/gif.latex?\frac{k_I}{s}E(s)"/> term means that we are integrating over the error, and this is made clear once we convert this back to the time domain using our Laplace transform tables. But let's do this in a slightly different way, using the convolution theorem. It tells us:
 
 <p  align="center">
-<img  src="https://latex.codecogs.com/gif.latex?f(t)%20*%20g(t)%20=%20\int_0^t%20f(\tau)g(t-\tau)%20d\tau%20\Rightarrow%20\mathcal{L}\{f(t)*g(t)\}%20=%20F(s)G(s)=Y(s)" />
+<img  src="https://latex.codecogs.com/gif.latex?f(t)%20*%20g(t)%20=%20\int_0^t%20f(\tau)g(t-\tau)%20d\tau%20\Rightarrow%20\mathcal{L}\{f(t)*g(t)\}%20=%20F(s)G(s)=Y(s)"  />
 
 In the case of our PID integral term, lets set <img  src="https://latex.codecogs.com/gif.latex?F(s)=E(s)"/> and <img  src="https://latex.codecogs.com/gif.latex?G(s)=\frac{1}{s}"/>. We also know that:
 
 <p  align="center">
 <img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}\{E(s)\}=f(t)=e(t)"/>
-
-<p  align="center">
-<img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}{\frac{1}{s}}=g(t)=g(t-\tau)=1"/>. 
  
-This leads to the following equation for our output:
-
 <p  align="center">
-<img  src="https://latex.codecogs.com/gif.latex?y(t)=f(t)%20*%20g(t)%20=%20\int_0^t%20e(\tau)%20d\tau%20\approx%20\sum_{t}e_t\Delta%20t" />
+<img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}{\frac{1}{s}}=g(t)=g(t-\tau)=1"/>.
+
+This leads to the following equation for our output:
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?y(t)=f(t)%20*%20g(t)%20=%20\int_0^t%20e(\tau)%20d\tau%20\approx%20\sum_{t}e_t\Delta%20t"  />
 
 <p  align="justify">
 Thus, all we need to do for our integral term is sum up the error over all time. As you may have noticed from the PID code block earlier, this is precisely why we continue to add the current integral term onto our previous integral term.
@@ -121,9 +120,9 @@ Thus, all we need to do for our integral term is sum up the error over all time.
 Let's try to apply the same idea to our lead lag controller, which can be described by the following in the Laplace domain:
 
 <p  align="center">
-<img  src="https://latex.codecogs.com/gif.latex?U(s)%20=%20E(s)%20\frac{K(s+a)}{s+b}%20=%20E(s)%20\left(\frac{K(a-b)}{s+b}%20+%20K\right)" />
+<img  src="https://latex.codecogs.com/gif.latex?U(s)%20=%20E(s)%20\frac{K(s+a)}{s+b}%20=%20E(s)%20\left(\frac{K(a-b)}{s+b}%20+%20K\right)"  />
 
-This time, the <img  src="https://latex.codecogs.com/gif.latex?KE(s)"/> term is our proportional controller, and <img  src="https://latex.codecogs.com/gif.latex?E(s)%20\frac{K(a-b)}{s+b}" /> becomes our integral controller. Now, 
+This time, the <img  src="https://latex.codecogs.com/gif.latex?KE(s)"/> term is our proportional controller, and <img  src="https://latex.codecogs.com/gif.latex?E(s)%20\frac{K(a-b)}{s+b}"  /> becomes our integral controller. Now,
 
 <p  align="center">
 <img  src="https://latex.codecogs.com/gif.latex?F(s)=E(s)"/>
@@ -131,13 +130,13 @@ This time, the <img  src="https://latex.codecogs.com/gif.latex?KE(s)"/> term is 
 <p  align="center">
 <img  src="https://latex.codecogs.com/gif.latex?G(s)=\frac{K(a-b)}{s+b}"/>
 
-and, 
+and,
 
 <p  align="center">
 <img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}\{E(s)\}=f(t)=e(t)"/>
 
 <p  align="center">
-<img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}{\frac{K(a-b)}{s+b}}=g(t)=K(a-b)\exp(-bt)"/> 
+<img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}{\frac{K(a-b)}{s+b}}=g(t)=K(a-b)\exp(-bt)"/>
 
 where <img  src="https://latex.codecogs.com/gif.latex?t>0"/>. This leads to the following equation for our output:
 
@@ -148,18 +147,29 @@ where <img  src="https://latex.codecogs.com/gif.latex?t>0"/>. This leads to the 
 <img  src="https://latex.codecogs.com/gif.latex?\approx%20K(a-b)\sum_{t}e_t\exp(-b(t-\tau))\Delta%20t"  />
 
 <p  align="justify">
-But, as you may have noticed, there's a small problem. Because we are multiplying two functions now and we are also time shifting g(t), the past multiplication terms will also change! This wasn't a problem earlier because in the PID case we had g(t) = g(t-tau) = 1 and we didn't have to consider this. Now, instead of adding an integral term continuously, we need to keep a continuous history of all errors and integral term calculations. Now, we can implement this in code:
+But, as you may have noticed, there's a small problem. Because we are multiplying two functions now and we are also time shifting g(t), the past multiplication terms will also change! This wasn't a problem earlier because in the PID case we had g(t) = g(t-tau) = 1 and we didn't have to consider this. To prevent us from having to keep a running history of our error terms, we can make use of a very convenient property of exponentials (credit to @gunvirranu for pointing this out)!
+
+Expanding the error terms at time i,
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?E_i%20=%20e_0%20\exp(-b%20t_i)%20+%20e_1%20\exp(-b%20t_{i-1})%20+%20\dots%20+%20e_{i}%20\exp(-b%20t_0)"  />
+
+as well as at time i+1,
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?E_{i+1}%20=%20e_0%20\exp(-b%20t_{i+1})%20+%20e_1%20\exp(-b%20t_{i})%20+%20\dots%20+%20e_{i}%20\exp(-b%20t_1)%20+%20e_{i+1}\exp(-b%20t_0)" />
+
+it very nicely follows that:
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?E_{i+1}%20=%20E_i%20\exp(-b%20\Delta%20t)%20+%20e_{i+1}%20\exp(-b%20t_0)" />
+
+And so, we are well equipped with implementing this in code:
 
 ```python
 # The Lead Lag Control loop
-error = K * (error +  integral)
-times = [times[0] + dt] + times
-exp_list = (a-b) * np.exp(-b * times)
-err_list += [error]
-integral = np.sum(exp_list * err_list) * dt
+error = K * (error + (a-b) * integral)
+integral = integral * np.exp(-b * dt) + error
 ```
 <p  align="justify">
-A potential issue with this implementation is that our space complexity becomes infinite as t -> infinity. To solve this, since we are dealing with a decaying exponential, the leading terms in np.sum(exp_list * err_list) approach zero for large t. We could therefore just cap our array size to some finite number (can be tuned depending on how quickly the exponential decays) and it should still give us a good approximation.
+And thats it! The simplicity of the lead-lag controller is hidden in the math.
 
 <p  align="center">
 <a href="https://www.youtube.com/embed/GudSzbR40U0">
