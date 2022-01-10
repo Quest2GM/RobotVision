@@ -179,6 +179,30 @@ And thats it! The simplicity of the lead-lag controller is hidden in the math.
 <p  align="justify">
 More investigation into how to properly tune the gains for the lead-lag controller needs to be done.
 
+### Discretizing the Transfer Function
+
+<p  align="justify">
+In reality, digital systems are discrete and not continuous. It is no different here. We can use the bilinear transform to discretize our system, which has the added benefit of an accuracy boost since it is derived from the trapezoidal rule. As an example, let's use it to discretize our lead-lag controller.
+
+Our continuous transfer function is:
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?G(s)%20=%20\frac{U(s)}{E(s)}%20=%20\frac{K(a-b)}{s+b}%20+%20K" />
+
+Applying the bilinear transform:
+
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?G\left(\frac{2(z-1)}{T(z+1)}\right)%20=%20\frac{KT(a-b)(1+z^{-1})%20+%20K(2(1-z^{-1})%20+%20bT(1+z^{-1}))}{2(1-z^{-1})%20+%20bT(1+z^{-1})}" />
+
+Finally, determining the difference equation:
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?\Rightarrow%20(2%20+%20bT)u_k%20+%20(bT-2)u_{k-1}%20=%20K(2+bT+T(a-b))e_k%20+%20K(bT-2+T(a-b))e_{k-1}" />
+
+leading to:
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?u_k%20=%20\frac{K(2+bT+T(a-b))}{2+bT}e_k%20+%20\frac{K(bT-2+T(a-b))}{2+bT}e_{k-1}+\frac{2-bT}{2+bT}u_{k-1}" />
+
+Implementing this is simple as we can use the trick with our PID controller; we just keep track of the previous output and error terms. I'll leave coding this up as an exercise to the viewer.
+
 ## How do I get from here to there?
 
 ### Dubin's Path Calculator
