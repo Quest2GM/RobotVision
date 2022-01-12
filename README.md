@@ -203,7 +203,7 @@ leading to:
 <p  align="center">
 <img  src="https://latex.codecogs.com/gif.latex?u_k%20=%20\frac{K(2+bT+T(a-b))}{2+bT}e_k%20+%20\frac{K(bT-2+T(a-b))}{2+bT}e_{k-1}+\frac{2-bT}{2+bT}u_{k-1}" />
 
-Implementing this is simple as we can use the trick with our PID controller; we just keep track of the previous output and error terms. I'll leave coding this up as an exercise to the viewer.
+Implementing this is simple as we can use the trick with our PID controller; we just keep track of the previous control output and error terms. I'll leave coding this up as an exercise to the viewer.
 
 ## How do I get from here to there?
 
@@ -329,4 +329,5 @@ I've put the remaining items on our list on hold for now, and I may come back to
 ## Acknowledgements
 - Professor Gabriele D'Eleuterio: ROB301 lectures and primers
 - Professor Cyrill Stachniss: YouTube series on Kalman Filtering and SLAM
-- Professor Angela Shoellig: ROB310 lectures and class demos
+- Professor Angela Schoellig: ROB310 lectures and class demos
+- Brian Douglas' Control System Lectures on YouTube
