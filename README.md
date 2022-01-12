@@ -201,7 +201,7 @@ Finally, determining the difference equation:
 
 leading to:
 <p  align="center">
-<img  src="https://latex.codecogs.com/gif.latex?u_k%20=%20\frac{K(2+bT+T(a-b))}{2+bT}e_k%20+%20\frac{K(bT-2+T(a-b))}{2+bT}e_{k-1}+\frac{2-bT}{2+bT}u_{k-1}" />
+<img  src="https://latex.codecogs.com/gif.latex?u_k%20=%20K\left(\frac{bT+2+T(a-b)}{2+bT}e_k%20+%20\frac{bT-2+T(a-b)}{2+bT}e_{k-1}\right)+\frac{2-bT}{2+bT}u_{k-1}" />
 
 Implementing this is simple as we can use the trick with our PID controller; we just keep track of the previous control output and error terms. I'll leave coding this up as an exercise to the viewer.
 
