@@ -69,7 +69,8 @@ Implementing this in code is well known:
 	
 ```python
 # The PID Control Loop
-error = kp * error + ki * integral + kd * derivative
+error = distance_from_path()
+control = kp * error + ki * integral + kd * derivative
 integral += error * dt
 derivative = (error - last_error) / dt
 last_error = error
@@ -165,7 +166,8 @@ And so, we are well equipped with implementing this in code:
 
 ```python
 # The Lead Lag Control loop
-error = K * (error + (a-b) * integral)
+error = distance_from_path()
+control = K * (error + (a-b) * integral)
 integral = integral * np.exp(-b * dt) + error
 ```
 <p  align="justify">

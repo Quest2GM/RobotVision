@@ -426,7 +426,7 @@ class PID:
         dt = 1/speed
 
         # Correct terms
-        self.I = self.I * np.exp(-self.kd * dt) + self.E
+        self.I = self.I * np.exp(-self.kd * dt) + self.P
         
         # Return results
         return self.E, self.e_rot
