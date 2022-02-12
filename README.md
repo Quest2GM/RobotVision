@@ -31,14 +31,14 @@ Let's help the robot achieve control, path planning, localization and mapping.
 ### Defining the Robot's Model
 
 <p  align="justify">
-The vehicle has three manuevers; rotate clockwise, rotate counter-clockwise and drive straight. Thus, the most logical control input <img  src="https://render.githubusercontent.com/render/math?math=u=\begin{bmatrix}%20v%20&%20\omega%20\end{bmatrix}"  /> is a vector with velocity, <img  src="https://render.githubusercontent.com/render/math?math=v"  />, and angular velocity, <img  src="https://render.githubusercontent.com/render/math?math=\omega"  />.
+The vehicle has three manuevers; rotate clockwise, rotate counter-clockwise and drive straight. Thus, the most logical control input <img  src="https://latex.codecogs.com/gif.latex?u=\begin{bmatrix}%20v%20&%20\omega%20\end{bmatrix}"  /> is a vector with velocity, <img  src="https://latex.codecogs.com/gif.latex?v"  />, and angular velocity, <img  src="https://latex.codecogs.com/gif.latex?\omega"  />.
 
 <p  align="justify">
 The trick to achieving angular control when the vehicle's foreign metric system is in pixels is in the rotation matrix. The Tkinter grid is positioned such that positive is to the right and down, whereas the conventional form is to the right and up. Thus, the conversion to the pixel reference frame comes down to a vertical flip. The CW and CCW 2D rotation matrices can be deduced as:
 
 <p  align="center">
-	<img  src="https://render.githubusercontent.com/render/math?math=\textbf{C}_{cw}=\begin{bmatrix}%20\cos{\theta}%20&%20-%20%20\sin{\theta}\\%20%20\sin{\theta}%20&%20\cos{\theta}%20\end{bmatrix}"/>  &nbsp; &nbsp; &nbsp;
-	<img  src="https://render.githubusercontent.com/render/math?math=\textbf{C}_{ccw}=\begin{bmatrix}%20\cos{\theta}%20&%20\sin{\theta}\\%20%20-\sin{\theta}%20&%20\cos{\theta}%20\end{bmatrix}"/>
+	<img  src="https://latex.codecogs.com/gif.latex?\textbf{C}_{cw}=\begin{bmatrix}%20\cos{\theta}%20&%20-%20%20\sin{\theta}\\%20%20\sin{\theta}%20&%20\cos{\theta}%20\end{bmatrix}"/>  &nbsp; &nbsp; &nbsp;
+	<img  src="https://latex.codecogs.com/gif.latex?\textbf{C}_{ccw}=\begin{bmatrix}%20\cos{\theta}%20&%20\sin{\theta}\\%20%20-\sin{\theta}%20&%20\cos{\theta}%20\end{bmatrix}"/>
 
 <p  align="justify">
 These rotation matrices can be applied to each of the "six rectangles" that the robot composes of to achieve rotation! Note that although the math to follow from here will ignore the discrepancy from the vertical flip, we must be mindful that we use the negative y-direction in all of our equations when we are actually programming this.
@@ -54,16 +54,16 @@ There is one problem that we need to overcome - how do we know when to command t
 <img src="images/pid_cross_product.png" alt="PID_cross_prod">
 
 <p  align="justify">
-At each iteration of our PID control loop, we find the point on the path that is the shortest distance away from the robot, and determine the vector that goes through this point and is tangent to the path. This is our 'b' vector. Then we find the vector that describes the heading of the robot, and this is our 'a' vector. To enable the use of the cross product, we add a third dimension to our vectors. If you can visualize the right hand rule, notice that computing <img  src="https://render.githubusercontent.com/render/math?math=f=|\underrightarrow{a}\times\underrightarrow{b}|" > will always be negative if the robot is to the left of the path, positive if it is to the right of the path, and zero if it is perfectly aligned with the path.
+At each iteration of our PID control loop, we find the point on the path that is the shortest distance away from the robot, and determine the vector that goes through this point and is tangent to the path. This is our 'b' vector. Then we find the vector that describes the heading of the robot, and this is our 'a' vector. To enable the use of the cross product, we add a third dimension to our vectors. If you can visualize the right hand rule, notice that computing <img  src="https://latex.codecogs.com/gif.latex?f=|\underrightarrow{a}\times\underrightarrow{b}|" > will always be negative if the robot is to the left of the path, positive if it is to the right of the path, and zero if it is perfectly aligned with the path.
 
 <p  align="justify">
-The state model with state, <img src="https://render.githubusercontent.com/render/math?math=\textbf{x}%20=%20\begin{bmatrix}%20x%20&%20%20y%20&%20\theta%20\end{bmatrix}"/>, for our system given our control input can be defined as the following:
+The state model with state, <img src="https://latex.codecogs.com/gif.latex?\textbf{x}%20=%20\begin{bmatrix}%20x%20&%20%20y%20&%20\theta%20\end{bmatrix}"/>, for our system given our control input can be defined as the following:
 
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=\textbf{x}_{k+1}%20=%20\begin{bmatrix}%20x_k%20+%20v_k\Delta%20t\cos(\theta_k+F\omega_k\Delta%20t)%20\\%20y_k%20+%20v_k\Delta%20t\sin(\theta_k+F\omega_k\Delta%20t)%20\\%20\theta_k%20+%20F\omega_k\Delta%20t%20\end{bmatrix}%20"/>
+<img  src="https://latex.codecogs.com/gif.latex?\textbf{x}_{k+1}%20=%20\begin{bmatrix}%20x_k%20+%20v_k\Delta%20t\cos(\theta_k+F\omega_k\Delta%20t)%20\\%20y_k%20+%20v_k\Delta%20t\sin(\theta_k+F\omega_k\Delta%20t)%20\\%20\theta_k%20+%20F\omega_k\Delta%20t%20\end{bmatrix}%20"/>
 
 <p  align="justify">
-We define <img src="https://render.githubusercontent.com/render/math?math=F=\frac{f}{|f|}"/>, which basically is the correction factor (either +1 or -1) that identifies if the robot is moving clockwise or counterclockwise.
+We define <img src="https://latex.codecogs.com/gif.latex?F=\frac{f}{|f|}"/>, which basically is the correction factor (either +1 or -1) that identifies if the robot is moving clockwise or counterclockwise.
 
 Implementing this in code is well known:
 	
@@ -94,25 +94,25 @@ I remember in my Control Systems class that we were taught the lead-lag controll
 The PID controller can be described in the Laplace domain as:
  
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=U(s)%20=%20E(s)%20\left(k_p%20+%20\frac{k_I}{s}%20+%20sk_D\right)"/>
+<img  src="https://latex.codecogs.com/gif.latex?U(s)%20=%20E(s)%20\left(k_p%20+%20\frac{k_I}{s}%20+%20sk_D\right)"/>
 
 <p  align="justify">
-The <img  src="https://render.githubusercontent.com/render/math?math=\frac{k_I}{s}E(s)"/> term means that we are integrating over the error, and this is made clear once we convert this back to the time domain using our Laplace transform tables. But let's do this in a slightly different way, using the convolution theorem. It tells us:
+The <img  src="https://latex.codecogs.com/gif.latex?\frac{k_I}{s}E(s)"/> term means that we are integrating over the error, and this is made clear once we convert this back to the time domain using our Laplace transform tables. But let's do this in a slightly different way, using the convolution theorem. It tells us:
 
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=f(t)%20*%20g(t)%20=%20\int_0^t%20f(\tau)g(t-\tau)%20d\tau%20\Rightarrow%20\mathcal{L}\{f(t)*g(t)\}%20=%20F(s)G(s)=Y(s)"  />
+<img  src="https://latex.codecogs.com/gif.latex?f(t)%20*%20g(t)%20=%20\int_0^t%20f(\tau)g(t-\tau)%20d\tau%20\Rightarrow%20\mathcal{L}\{f(t)*g(t)\}%20=%20F(s)G(s)=Y(s)"  />
 
-In the case of our PID integral term, lets set <img  src="https://render.githubusercontent.com/render/math?math=F(s)=E(s)"/> and <img  src="https://render.githubusercontent.com/render/math?math=G(s)=\frac{1}{s}"/>. We also know that:
+In the case of our PID integral term, lets set <img  src="https://latex.codecogs.com/gif.latex?F(s)=E(s)"/> and <img  src="https://latex.codecogs.com/gif.latex?G(s)=\frac{1}{s}"/>. We also know that:
 
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=\mathcal{L}^{-1}\{E(s)\}=f(t)=e(t)"/>
+<img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}\{E(s)\}=f(t)=e(t)"/>
  
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=\mathcal{L}^{-1}{\frac{1}{s}}=g(t)=g(t-\tau)=1"/>.
+<img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}{\frac{1}{s}}=g(t)=g(t-\tau)=1"/>.
 
 This leads to the following equation for our output:
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=y(t)=f(t)%20*%20g(t)%20=%20\int_0^t%20e(\tau)%20d\tau%20\approx%20\sum_{t}e_t\Delta%20t"  />
+<img  src="https://latex.codecogs.com/gif.latex?y(t)=f(t)%20*%20g(t)%20=%20\int_0^t%20e(\tau)%20d\tau%20\approx%20\sum_{t}e_t\Delta%20t"  />
 
 <p  align="justify">
 Thus, all we need to do for our integral term is sum up the error over all time. As you may have noticed from the PID code block earlier, this is precisely why we continue to add the current integral term onto our previous integral term.
@@ -121,46 +121,46 @@ Thus, all we need to do for our integral term is sum up the error over all time.
 Let's try to apply the same idea to our lead lag controller, which can be described by the following in the Laplace domain:
 
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=U(s)%20=%20E(s)%20\frac{K(s+a)}{s+b}%20=%20E(s)%20\left(\frac{K(a-b)}{s+b}%20+%20K\right)"  />
+<img  src="https://latex.codecogs.com/gif.latex?U(s)%20=%20E(s)%20\frac{K(s+a)}{s+b}%20=%20E(s)%20\left(\frac{K(a-b)}{s+b}%20+%20K\right)"  />
 
-This time, the <img  src="https://render.githubusercontent.com/render/math?math=KE(s)"/> term is our proportional controller, and <img  src="https://render.githubusercontent.com/render/math?math=E(s)%20\frac{K(a-b)}{s+b}"  /> becomes our integral controller. Now,
-
-<p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=F(s)=E(s)"/>
+This time, the <img  src="https://latex.codecogs.com/gif.latex?KE(s)"/> term is our proportional controller, and <img  src="https://latex.codecogs.com/gif.latex?E(s)%20\frac{K(a-b)}{s+b}"  /> becomes our integral controller. Now,
 
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=G(s)=\frac{K(a-b)}{s+b}"/>
+<img  src="https://latex.codecogs.com/gif.latex?F(s)=E(s)"/>
+
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?G(s)=\frac{K(a-b)}{s+b}"/>
 
 and,
 
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=\mathcal{L}^{-1}\{E(s)\}=f(t)=e(t)"/>
+<img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}\{E(s)\}=f(t)=e(t)"/>
 
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=\mathcal{L}^{-1}{\frac{K(a-b)}{s+b}}=g(t)=K(a-b)\exp(-bt)"/>
+<img  src="https://latex.codecogs.com/gif.latex?\mathcal{L}^{-1}{\frac{K(a-b)}{s+b}}=g(t)=K(a-b)\exp(-bt)"/>
 
-where <img  src="https://render.githubusercontent.com/render/math?math=t>0"/>. This leads to the following equation for our output:
-
-<p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=y(t)=f(t)%20*%20g(t)%20=%20\int_0^t%20e(\tau)K(a-b)\exp(-b(t-\tau))%20d\tau"  />
+where <img  src="https://latex.codecogs.com/gif.latex?t>0"/>. This leads to the following equation for our output:
 
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=\approx%20K(a-b)\sum_{t}e_t\exp(-b(t-\tau))\Delta%20t"  />
+<img  src="https://latex.codecogs.com/gif.latex?y(t)=f(t)%20*%20g(t)%20=%20\int_0^t%20e(\tau)K(a-b)\exp(-b(t-\tau))%20d\tau"  />
+
+<p  align="center">
+<img  src="https://latex.codecogs.com/gif.latex?\approx%20K(a-b)\sum_{t}e_t\exp(-b(t-\tau))\Delta%20t"  />
 
 <p  align="justify">
 But, as you may have noticed, there's a small problem. Because we are multiplying two functions now and we are also time shifting g(t), the past multiplication terms will also change! This wasn't a problem earlier because in the PID case we had g(t) = g(t-tau) = 1 and we didn't have to consider this. To prevent us from having to keep a running history of our error terms, we can make use of a very convenient property of exponentials (credit to @gunvirranu for pointing this out)!
 
 Expanding the error terms at time i,
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=E_i%20=%20e_0%20\exp(-b%20t_i)%20+%20e_1%20\exp(-b%20t_{i-1})%20+%20\dots%20+%20e_{i}%20\exp(-b%20t_0)"  />
+<img  src="https://latex.codecogs.com/gif.latex?E_i%20=%20e_0%20\exp(-b%20t_i)%20+%20e_1%20\exp(-b%20t_{i-1})%20+%20\dots%20+%20e_{i}%20\exp(-b%20t_0)"  />
 
 as well as at time i+1,
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=E_{i+1}%20=%20e_0%20\exp(-b%20t_{i+1})%20+%20e_1%20\exp(-b%20t_{i})%20+%20\dots%20+%20e_{i}%20\exp(-b%20t_1)%20+%20e_{i+1}\exp(-b%20t_0)" />
+<img  src="https://latex.codecogs.com/gif.latex?E_{i+1}%20=%20e_0%20\exp(-b%20t_{i+1})%20+%20e_1%20\exp(-b%20t_{i})%20+%20\dots%20+%20e_{i}%20\exp(-b%20t_1)%20+%20e_{i+1}\exp(-b%20t_0)" />
 
 it very nicely follows that:
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=E_{i+1}%20=%20E_i%20\exp(-b%20\Delta%20t)%20+%20e_{i+1}%20\exp(-b%20t_0)" />
+<img  src="https://latex.codecogs.com/gif.latex?E_{i+1}%20=%20E_i%20\exp(-b%20\Delta%20t)%20+%20e_{i+1}%20\exp(-b%20t_0)" />
 
 And so, we are well equipped with implementing this in code:
 
@@ -188,20 +188,20 @@ In reality, digital systems are discrete and not continuous. It is no different 
 
 Our continuous transfer function is:
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=G(s)%20=%20\frac{U(s)}{E(s)}%20=%20\frac{K(a-b)}{s+b}%20+%20K" />
+<img  src="https://latex.codecogs.com/gif.latex?G(s)%20=%20\frac{U(s)}{E(s)}%20=%20\frac{K(a-b)}{s+b}%20+%20K" />
 
 Applying the bilinear transform:
 
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=G\left(\frac{2(z-1)}{T(z+1)}\right)%20=%20\frac{KT(a-b)(1+z^{-1})%20+%20K(2(1-z^{-1})%20+%20bT(1+z^{-1}))}{2(1-z^{-1})%20+%20bT(1+z^{-1})}" />
+<img  src="https://latex.codecogs.com/gif.latex?G\left(\frac{2(z-1)}{T(z+1)}\right)%20=%20\frac{KT(a-b)(1+z^{-1})%20+%20K(2(1-z^{-1})%20+%20bT(1+z^{-1}))}{2(1-z^{-1})%20+%20bT(1+z^{-1})}" />
 
 Finally, determining the difference equation:
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=\Rightarrow%20(2%20+%20bT)u_k%20+%20(bT-2)u_{k-1}%20=%20K(2+bT+T(a-b))e_k%20+%20K(bT-2+T(a-b))e_{k-1}" />
+<img  src="https://latex.codecogs.com/gif.latex?\Rightarrow%20(2%20+%20bT)u_k%20+%20(bT-2)u_{k-1}%20=%20K(2+bT+T(a-b))e_k%20+%20K(bT-2+T(a-b))e_{k-1}" />
 
 leading to:
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=u_k%20=%20K\left(\frac{bT+2+T(a-b)}{2+bT}e_k%20+%20\frac{bT-2+T(a-b)}{2+bT}e_{k-1}\right)+\frac{2-bT}{2+bT}u_{k-1}" />
+<img  src="https://latex.codecogs.com/gif.latex?u_k%20=%20K\left(\frac{bT+2+T(a-b)}{2+bT}e_k%20+%20\frac{bT-2+T(a-b)}{2+bT}e_{k-1}\right)+\frac{2-bT}{2+bT}u_{k-1}" />
 
 Implementing this is simple as we can use the trick with our PID controller; we just keep track of the previous control output and error terms. I'll leave coding this up as an exercise to the viewer.
 
@@ -233,25 +233,25 @@ TBD
 As defined in the PID control section, our state update equation can be given as the following, this time with a state Gaussian noise term:
 
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=f(\textbf{x}_k,\textbf{u}_k)%20=%20\begin{bmatrix}%20x_k%20+%20v_k\Delta%20t\cos(\theta_k+F\omega_k\Delta%20t)%20\\%20y_k%20+%20v_k\Delta%20t\sin(\theta_k+F\omega_k\Delta%20t)%20\\%20\theta_k%20+%20F\omega_k\Delta%20t%20\end{bmatrix}%20+%20\textbf{v}_k"/>
+<img  src="https://latex.codecogs.com/gif.latex?f(\textbf{x}_k,\textbf{u}_k)%20=%20\begin{bmatrix}%20x_k%20+%20v_k\Delta%20t\cos(\theta_k+F\omega_k\Delta%20t)%20\\%20y_k%20+%20v_k\Delta%20t\sin(\theta_k+F\omega_k\Delta%20t)%20\\%20\theta_k%20+%20F\omega_k\Delta%20t%20\end{bmatrix}%20+%20\textbf{v}_k"/>
 
 <p  align="justify">
 Since we are working in 2D, we require a 2D measurement model. Luckily, our LIDAR sensor can measure relative angle and distance, leading to the following measurement model:
 
 <p  align="center">
-<img  src="https://render.githubusercontent.com/render/math?math=h(\textbf{x}_k)%20=%20\begin{bmatrix}%20\arctan\left(\frac{y_L%20-%20y_k}{x_L-x_k}\right)%20-%20\theta_k%20\\%20\sqrt{(x_L-x_k)^2%20+%20(y_L-y_k)^2}%20\end{bmatrix}%20+%20\textbf{w}_k"/>
+<img  src="https://latex.codecogs.com/gif.latex?h(\textbf{x}_k)%20=%20\begin{bmatrix}%20\arctan\left(\frac{y_L%20-%20y_k}{x_L-x_k}\right)%20-%20\theta_k%20\\%20\sqrt{(x_L-x_k)^2%20+%20(y_L-y_k)^2}%20\end{bmatrix}%20+%20\textbf{w}_k"/>
 
 <p  align="justify">
-where <img  src="https://render.githubusercontent.com/render/math?math=(x_L,y_L)"/>  is the position of a LIDAR detectable object. Note that in implementation we use the atan2 function instead of atan to account for directionality. Given this, the Jacobian matrices with respect to state space and measurement space can be derived:
+where <img  src="https://latex.codecogs.com/gif.latex?(x_L,y_L)"/>  is the position of a LIDAR detectable object. Note that in implementation we use the atan2 function instead of atan to account for directionality. Given this, the Jacobian matrices with respect to state space and measurement space can be derived:
 
 <p  align="center">
-<img src="https://render.githubusercontent.com/render/math?math=\textbf{A}_k%20=%20\begin{bmatrix}%201%20&%200%20&%20-v_k\Delta%20t\sin(\theta_k+F\omega_k\Delta%20t)%20%20\\%200%20&%201%20&%20v_k\Delta%20t\cos(\theta_k+F\omega_k\Delta%20t)%20\\%200%20&%200%20&%201%20\end{bmatrix}" />
+<img src="https://latex.codecogs.com/gif.latex?\textbf{A}_k%20=%20\begin{bmatrix}%201%20&%200%20&%20-v_k\Delta%20t\sin(\theta_k+F\omega_k\Delta%20t)%20%20\\%200%20&%201%20&%20v_k\Delta%20t\cos(\theta_k+F\omega_k\Delta%20t)%20\\%200%20&%200%20&%201%20\end{bmatrix}" />
 
 <p  align="center">
-<img src="https://render.githubusercontent.com/render/math?math=\textbf{D}_k%20=%20\begin{bmatrix}%20\frac{y_L-y_k}{d^2}%20&%20\frac{x_k-x_L}{d^2}%20&%20-1%20%20\\%20\frac{x_k-x_L}{d}%20&%20\frac{y_k-y_L}{d}%20&%200%20\end{bmatrix}%20\hspace{0.4cm}\text{where}\hspace{0.4cm}%20d%20=%20\sqrt{(x_L-x_k)^2+(y_L-y_k)^2}" />
+<img src="https://latex.codecogs.com/gif.latex?\textbf{D}_k%20=%20\begin{bmatrix}%20\frac{y_L-y_k}{d^2}%20&%20\frac{x_k-x_L}{d^2}%20&%20-1%20%20\\%20\frac{x_k-x_L}{d}%20&%20\frac{y_k-y_L}{d}%20&%200%20\end{bmatrix}%20\hspace{0.4cm}\text{where}\hspace{0.4cm}%20d%20=%20\sqrt{(x_L-x_k)^2+(y_L-y_k)^2}" />
 
 <p  align="justify">
-Finally, given an initial state covariance, <img src="https://render.githubusercontent.com/render/math?math=\textbf{P}_{k|k}"/>, process noise, <img src="https://render.githubusercontent.com/render/math?math=\textbf{Q}_{k}"/>, and measurement noise, <img src="https://render.githubusercontent.com/render/math?math=\textbf{R}_{k}"/>, we can apply the EKF algorithm:
+Finally, given an initial state covariance, <img src="https://latex.codecogs.com/gif.latex?\textbf{P}_{k|k}"/>, process noise, <img src="https://latex.codecogs.com/gif.latex?\textbf{Q}_{k}"/>, and measurement noise, <img src="https://latex.codecogs.com/gif.latex?\textbf{R}_{k}"/>, we can apply the EKF algorithm:
 
 <p  align="center">
 <img src="images/ekf_alg.png" alt="EKF_alg">
@@ -262,7 +262,7 @@ Finally, given an initial state covariance, <img src="https://render.githubuserc
 </a>
 
 <p  align="justify">
-In the demo, the red circle represents a LIDAR detectable station, the black circular outline represents the detectable range of the station and the cyan trace is the predicted state. When the robot is outside of the detectable range, it cannot update the state with the Kalman gain since it doesn't receive any sensor readings, and so it predicts normally with <img  src="https://render.githubusercontent.com/render/math?math=f(\textbf{x}_k,\textbf{u}_k)"/> without accounting for error. Notice how, when the robot enters the detectable range, it very visibly starts correcting the state and it eventually converges quite amazingly at the end, despite large deviations during traversal outside of the detectable range.
+In the demo, the red circle represents a LIDAR detectable station, the black circular outline represents the detectable range of the station and the cyan trace is the predicted state. When the robot is outside of the detectable range, it cannot update the state with the Kalman gain since it doesn't receive any sensor readings, and so it predicts normally with <img  src="https://latex.codecogs.com/gif.latex?f(\textbf{x}_k,\textbf{u}_k)"/> without accounting for error. Notice how, when the robot enters the detectable range, it very visibly starts correcting the state and it eventually converges quite amazingly at the end, despite large deviations during traversal outside of the detectable range.
 
 ### Simultaneous Localization and Mapping (SLAM)
 
@@ -273,13 +273,13 @@ The conversion from EKF to SLAM isn't a difficult one, so long as we are continu
 The biggest difference in implementation from the EKF is the fact that we need to additionally track the positions of the objects we observe. In the case of a robot exploring an unknown environment, we wouldn't know the number of objects to keep track of beforehand and so we would need to constantly update the sizes of our matrices. For simplicity, let's assume that we know the number of objects that require tracking in our map. We need to keep track of 2N additional things - the x and y coordinates for each of our N objects. Our conversion matrix from our EKF state space to this higher order space can be defined as the following:
 
 <p  align="center">
-<img src="https://render.githubusercontent.com/render/math?math=\textbf{F}_x%20=%20\overbrace{\begin{bmatrix}%201%20&%200%20&%200%20&%200%20&%20\dots%20&%200\\%200%20&%201%20&%200%20&%200%20&%20\dots%20&%200\\%200%20&%200%20&%201%20&%200%20&%20\dots%20&%200%20\end{bmatrix}}^\text{2N+3}" />
+<img src="https://latex.codecogs.com/gif.latex?\textbf{F}_x%20=%20\overbrace{\begin{bmatrix}%201%20&%200%20&%200%20&%200%20&%20\dots%20&%200\\%200%20&%201%20&%200%20&%200%20&%20\dots%20&%200\\%200%20&%200%20&%201%20&%200%20&%20\dots%20&%200%20\end{bmatrix}}^\text{2N+3}" />
 
 <p  align="justify">
-Next, we need some way of defining <img src="https://render.githubusercontent.com/render/math?math=\textbf{D}_{k}"/>, but only to allow updates for objects in our current field of view. As such, we define the following matrices:
+Next, we need some way of defining <img src="https://latex.codecogs.com/gif.latex?\textbf{D}_{k}"/>, but only to allow updates for objects in our current field of view. As such, we define the following matrices:
 
 <p  align="center">
-<img src="https://render.githubusercontent.com/render/math?math=\textbf{D}_{low}%20=%20\begin{bmatrix}%20\frac{y_L-y_k}{d^2}%20&%20\frac{x_k-x_L}{d^2}%20&%20-1%20&%20%20\frac{y_k-y_L}{d^2}%20&%20\frac{x_L-x_k}{d^2}%20\\%20\frac{x_k-x_L}{d}%20&%20\frac{y_k-y_L}{d}%20&%200%20&%20\frac{x_L-x_k}{d}%20&%20\frac{y_L-y_k}{d}%20\end{bmatrix}%20\hspace{1cm}%20\textbf{F}_D%20=%20\overbrace{\begin{bmatrix}%201%20&%200%20&%200%20&%200%20&%20\dots%20&%200%20&%200%20&%20\dots%20&%200%20\\%200%20&%201%20&%200%20&%200%20&%20\dots%20&%200%20&%200%20&%20\dots%20&%200%20\\%200%20&%200%20&%201%20&%200%20&%20\dots%20&%200%20&%200%20&%20\dots%20&%200%20\\%200%20&%200%20&%200%20&%200%20&%20\dots%20&%201%20&%200%20&%20\dots%20&%200%20\\%200%20&%200%20&%200%20&%200%20&%20\dots%20&%200%20&%201%20&%20\dots%20&%200%20\end{bmatrix}}^\text{2N+3}" />
+<img src="https://latex.codecogs.com/gif.latex?\textbf{D}_{low}%20=%20\begin{bmatrix}%20\frac{y_L-y_k}{d^2}%20&%20\frac{x_k-x_L}{d^2}%20&%20-1%20&%20%20\frac{y_k-y_L}{d^2}%20&%20\frac{x_L-x_k}{d^2}%20\\%20\frac{x_k-x_L}{d}%20&%20\frac{y_k-y_L}{d}%20&%200%20&%20\frac{x_L-x_k}{d}%20&%20\frac{y_L-y_k}{d}%20\end{bmatrix}%20\hspace{1cm}%20\textbf{F}_D%20=%20\overbrace{\begin{bmatrix}%201%20&%200%20&%200%20&%200%20&%20\dots%20&%200%20&%200%20&%20\dots%20&%200%20\\%200%20&%201%20&%200%20&%200%20&%20\dots%20&%200%20&%200%20&%20\dots%20&%200%20\\%200%20&%200%20&%201%20&%200%20&%20\dots%20&%200%20&%200%20&%20\dots%20&%200%20\\%200%20&%200%20&%200%20&%200%20&%20\dots%20&%201%20&%200%20&%20\dots%20&%200%20\\%200%20&%200%20&%200%20&%200%20&%20\dots%20&%200%20&%201%20&%20\dots%20&%200%20\end{bmatrix}}^\text{2N+3}" />
 
 This is enough to implement EKF-SLAM:
 
